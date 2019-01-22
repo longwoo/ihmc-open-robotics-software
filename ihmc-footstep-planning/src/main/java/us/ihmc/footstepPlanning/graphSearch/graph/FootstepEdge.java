@@ -2,12 +2,12 @@ package us.ihmc.footstepPlanning.graphSearch.graph;
 
 public class FootstepEdge
 {
-   private final FootstepNode startNode;
-   private final FootstepNode endNode;
+   private final FootstanceNode startNode;
+   private final FootstanceNode endNode;
 
    private final int hashCode;
 
-   public FootstepEdge(FootstepNode startNode, FootstepNode endNode)
+   public FootstepEdge(FootstanceNode startNode, FootstanceNode endNode)
    {
       this.startNode = startNode;
       this.endNode = endNode;
@@ -15,12 +15,12 @@ public class FootstepEdge
       hashCode = computeHashCode(this);
    }
 
-   public FootstepNode getStartNode()
+   public FootstanceNode getStartNode()
    {
       return startNode;
    }
 
-   public FootstepNode getEndNode()
+   public FootstanceNode getEndNode()
    {
       return endNode;
    }

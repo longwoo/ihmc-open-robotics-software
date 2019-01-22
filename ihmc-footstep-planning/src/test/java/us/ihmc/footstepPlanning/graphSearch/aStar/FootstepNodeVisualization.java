@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Queue;
 
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
+import us.ihmc.footstepPlanning.graphSearch.graph.FootstanceNode;
 import us.ihmc.footstepPlanning.graphSearch.graph.FootstepNode;
 import us.ihmc.footstepPlanning.graphSearch.graph.visualization.BipedalFootstepPlannerNodeRejectionReason;
 import us.ihmc.footstepPlanning.graphSearch.listeners.BipedalFootstepPlannerListener;
@@ -88,9 +89,9 @@ public class FootstepNodeVisualization implements BipedalFootstepPlannerListener
    }
 
    @Override
-   public void addNode(FootstepNode node, FootstepNode previousNode)
+   public void addNode(FootstanceNode node, FootstanceNode previousNode)
    {
-      FootstepNode localNode = creat2dNode(node);
+      FootstepNode localNode = create2dNode(node.getStanceNode());
 
       if (nodeExists(localNode))
       {
@@ -121,7 +122,7 @@ public class FootstepNodeVisualization implements BipedalFootstepPlannerListener
 
    private void setNodeActive(FootstepNode node)
    {
-      FootstepNode localNode = creat2dNode(node);
+      FootstepNode localNode = create2dNode(node);
 
       if (nodeExists(localNode))
       {
@@ -142,9 +143,9 @@ public class FootstepNodeVisualization implements BipedalFootstepPlannerListener
    }
 
    @Override
-   public void rejectNode(FootstepNode node, FootstepNode previousNode, BipedalFootstepPlannerNodeRejectionReason reason)
+   public void rejectNode(FootstanceNode node, BipedalFootstepPlannerNodeRejectionReason reason)
    {
-      FootstepNode localNode = creat2dNode(node);
+      FootstepNode localNode = create2dNode(node.getStanceNode());
 
       if (nodeExists(localNode))
       {
@@ -165,18 +166,18 @@ public class FootstepNodeVisualization implements BipedalFootstepPlannerListener
    }
 
    @Override
-   public void plannerFinished(List<FootstepNode> plan)
+   public void plannerFinished(List<FootstanceNode> plan)
    {
    }
 
    @Override
-   public void reportLowestCostNodeList(List<FootstepNode> plan)
+   public void reportLowestCostNodeList(List<FootstanceNode> plan)
    {
    }
 
    private boolean nodeExists(FootstepNode node)
    {
-      FootstepNode localNode = creat2dNode(node);
+      FootstepNode localNode = create2dNode(node);
 
       if (activeNodes.containsKey(localNode))
          return true;
@@ -222,57 +223,8 @@ public class FootstepNodeVisualization implements BipedalFootstepPlannerListener
       time.add(1.0);
    }
 
-   private FootstepNode creat2dNode(FootstepNode node)
+   private FootstepNode create2dNode(FootstepNode node)
    {
       return new FootstepNode(node.getX(), node.getY());
-   }
-
-   /**
-    * Test method that makes a pattern of active and inactive nodes just for demonstration.
-    * @param args
-    */
-   public static void main(String[] args)
-   {
-      FootstepNodeVisualization viz = new FootstepNodeVisualization(100, 0.01, null);
-
-      for (int i = 0; i < 10; i++)
-      {
-         viz.addNode(new FootstepNode(0.05 * i, 0.0), null);
-         viz.tickAndUpdate();
-      }
-
-      for (int i = 0; i < 10; i++)
-      {
-         viz.addNode(new FootstepNode(0.05 * i, 0.1), null);
-         viz.tickAndUpdate();
-      }
-
-      for (int i = 0; i < 10; i++)
-      {
-         FootstepNode node = new FootstepNode(0.05 * i, 0.0);
-         viz.rejectNode(node, null, null);
-         viz.tickAndUpdate();
-      }
-
-      for (int i = 0; i < 10; i++)
-      {
-         FootstepNode node = new FootstepNode(0.05 * i, 0.1);
-         viz.rejectNode(node, null, null);
-         viz.tickAndUpdate();
-      }
-
-      for (int i = 0; i < 10; i++)
-      {
-         viz.addNode(new FootstepNode(0.05 * i, 0.0), null);
-         viz.tickAndUpdate();
-      }
-
-      for (int i = 0; i < 10; i++)
-      {
-         viz.addNode(new FootstepNode(0.05 * i, 0.1), null);
-         viz.tickAndUpdate();
-      }
-
-      viz.showAndSleep(true);
    }
 }

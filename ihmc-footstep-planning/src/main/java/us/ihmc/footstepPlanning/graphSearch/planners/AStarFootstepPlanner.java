@@ -3,16 +3,13 @@ package us.ihmc.footstepPlanning.graphSearch.planners;
 import org.apache.commons.math3.util.Precision;
 import us.ihmc.commons.Conversions;
 import us.ihmc.commons.PrintTools;
-import us.ihmc.euclid.axisAngle.AxisAngle;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.transform.RigidBodyTransform;
-import us.ihmc.euclid.tuple3D.Point3D;
-import us.ihmc.euclid.tuple3D.Vector3D;
-import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.footstepPlanning.*;
 import us.ihmc.footstepPlanning.graphSearch.footstepSnapping.*;
+import us.ihmc.footstepPlanning.graphSearch.graph.FootstanceNode;
 import us.ihmc.footstepPlanning.graphSearch.graph.FootstepGraph;
 import us.ihmc.footstepPlanning.graphSearch.graph.FootstepNode;
 import us.ihmc.footstepPlanning.graphSearch.heuristics.CostToGoHeuristics;
@@ -24,8 +21,6 @@ import us.ihmc.footstepPlanning.graphSearch.nodeExpansion.FootstepNodeExpansion;
 import us.ihmc.footstepPlanning.graphSearch.parameters.FootstepPlannerParameters;
 import us.ihmc.footstepPlanning.graphSearch.stepCost.FootstepCost;
 import us.ihmc.footstepPlanning.graphSearch.stepCost.FootstepCostBuilder;
-import us.ihmc.pathPlanning.visibilityGraphs.tools.PlanarRegionTools;
-import us.ihmc.robotics.geometry.PlanarRegion;
 import us.ihmc.robotics.geometry.PlanarRegionsList;
 import us.ihmc.robotics.referenceFrames.PoseReferenceFrame;
 import us.ihmc.robotics.robotSide.RobotSide;
@@ -47,13 +42,11 @@ public class AStarFootstepPlanner implements BodyPathAndFootstepPlanner
 
    private final FootstepPlannerParameters parameters;
 
-   private SideDependentList<FootstepNode> goalNodes;
-   private HashSet<FootstepNode> expandedNodes;
-   private PriorityQueue<FootstepNode> stack;
-   private FootstepNode startNode;
-   private FootstepNode endNode;
-
-   private PlanarRegionsList planarRegionsList;
+   private HashSet<FootstanceNode> expandedNodes;
+   private PriorityQueue<FootstanceNode> stack;
+   private FootstanceNode startNode;
+   private FootstanceNode goalNode;
+   private FootstanceNode endNode;
 
    private final FramePose3D goalPoseInWorld = new FramePose3D();
 
@@ -123,10 +116,12 @@ public class AStarFootstepPlanner implements BodyPathAndFootstepPlanner
 
          side = defaultStartNodeSide;
       }
-      startNode = new FootstepNode(stanceFootPose.getX(), stanceFootPose.getY(), stanceFootPose.getYaw(), side);
-      RigidBodyTransform startNodeSnapTransform = FootstepNodeSnappingTools.computeSnapTransform(startNode, stanceFootPose);
-      snapper.addSnapData(startNode, new FootstepNodeSnapData(startNodeSnapTransform));
-      nodeChecker.addStartNode(startNode, startNodeSnapTransform);
+
+      FootstepNode initialStanceFoot = new FootstepNode(stanceFootPose.getX(), stanceFootPose.getY(), stanceFootPose.getYaw(), side);
+      startNode = new FootstanceNode(null, initialStanceFoot);
+      RigidBodyTransform startNodeSnapTransform = FootstepNodeSnappingTools.computeSnapTransform(startNode.getStanceNode(), stanceFootPose);
+      snapper.addSnapData(startNode.getStanceNode(), new FootstepNodeSnapData(startNodeSnapTransform));
+      nodeChecker.addStartNode(startNode.getStanceNode(), startNodeSnapTransform);
 
       startAndGoalListeners.parallelStream().forEach(listener -> listener.setInitialPose(stanceFootPose));
    }
@@ -136,7 +131,7 @@ public class AStarFootstepPlanner implements BodyPathAndFootstepPlanner
    {
       checkGoalType(goal);
 
-      goalNodes = new SideDependentList<>();
+      SideDependentList<FootstepNode> goalNodes = new SideDependentList<>();
 
       SideDependentList<FramePose3D> goalPoses = new SideDependentList<>();
 
@@ -180,7 +175,6 @@ public class AStarFootstepPlanner implements BodyPathAndFootstepPlanner
    {
       nodeChecker.setPlanarRegions(planarRegionsList);
       snapper.setPlanarRegions(planarRegionsList);
-      this.planarRegionsList = planarRegionsList;
    }
 
    @Override
@@ -222,21 +216,22 @@ public class AStarFootstepPlanner implements BodyPathAndFootstepPlanner
    @Override
    public FootstepPlan getPlan()
    {
-      if (endNode == null || !graph.doesNodeExist(endNode))
+      if (goalNode == null || !graph.doesNodeExist(goalNode))
          return null;
 
       FootstepPlan plan = new FootstepPlan();
-      List<FootstepNode> path = graph.getPathFromStart(endNode);
+      List<FootstanceNode> path = graph.getPathFromStart(goalNode);
       for (int i = 1; i < path.size(); i++)
       {
-         RobotSide robotSide = path.get(i).getRobotSide();
+         FootstepNode swingStep = path.get(i).getStanceNode();
+         RobotSide robotSide = swingStep.getRobotSide();
 
          RigidBodyTransform footstepPose = new RigidBodyTransform();
-         footstepPose.setRotationYawAndZeroTranslation(path.get(i).getYaw());
-         footstepPose.setTranslationX(path.get(i).getX());
-         footstepPose.setTranslationY(path.get(i).getY());
+         footstepPose.setRotationYawAndZeroTranslation(swingStep.getYaw());
+         footstepPose.setTranslationX(swingStep.getX());
+         footstepPose.setTranslationY(swingStep.getY());
 
-         FootstepNodeSnapData snapData = snapper.snapFootstepNode(path.get(i));
+         FootstepNodeSnapData snapData = snapper.snapFootstepNode(swingStep);
          RigidBodyTransform snapTransform = snapData.getSnapTransform();
          snapTransform.transform(footstepPose);
          plan.addFootstep(robotSide, new FramePose3D(ReferenceFrame.getWorldFrame(), footstepPose));
@@ -266,19 +261,19 @@ public class AStarFootstepPlanner implements BodyPathAndFootstepPlanner
    {
       if (startNode == null)
          throw new NullPointerException("Need to set initial conditions before planning.");
-      if (goalNodes == null)
+      if (goalNode == null)
          throw new NullPointerException("Need to set goal before planning.");
 
       abortPlanning.set(false);
 
       graph.initialize(startNode);
-      NodeComparator nodeComparator = new NodeComparator(graph, goalNodes, heuristics);
+      NodeComparator nodeComparator = new NodeComparator(graph, goalNode, heuristics);
       stack = new PriorityQueue<>(nodeComparator);
 
       validGoalNode.set(true);
       for (RobotSide robotSide : RobotSide.values)
       {
-         boolean validGoalNode = nodeChecker.isNodeValid(goalNodes.get(robotSide), null);
+         boolean validGoalNode = nodeChecker.isNodeValid(goalNode, null);
          if (!validGoalNode && !parameters.getReturnBestEffortPlan())
          {
             if (debug)
@@ -292,7 +287,7 @@ public class AStarFootstepPlanner implements BodyPathAndFootstepPlanner
 
       stack.add(startNode);
       expandedNodes = new HashSet<>();
-      endNode = null;
+      goalNode = null;
 
       if (listener != null)
       {
@@ -339,7 +334,7 @@ public class AStarFootstepPlanner implements BodyPathAndFootstepPlanner
 
          iterations++;
 
-         FootstepNode nodeToExpand = stack.poll();
+         FootstanceNode nodeToExpand = stack.poll();
          if (expandedNodes.contains(nodeToExpand))
             continue;
          expandedNodes.add(nodeToExpand);
@@ -349,9 +344,9 @@ public class AStarFootstepPlanner implements BodyPathAndFootstepPlanner
 
          checkAndHandleBestEffortNode(nodeToExpand);
 
-         HashSet<FootstepNode> neighbors = nodeExpansion.expandNode(nodeToExpand);
+         HashSet<FootstanceNode> neighbors = nodeExpansion.expandNode(nodeToExpand);
          expandedNodesCount += neighbors.size();
-         for (FootstepNode neighbor : neighbors)
+         for (FootstanceNode neighbor : neighbors)
          {
             if (listener != null)
                listener.addNode(neighbor, nodeToExpand);
@@ -392,15 +387,14 @@ public class AStarFootstepPlanner implements BodyPathAndFootstepPlanner
       return true;
    }
 
-   private boolean checkAndHandleNodeAtGoal(FootstepNode nodeToExpand)
+   private boolean checkAndHandleNodeAtGoal(FootstanceNode nodeToExpand)
    {
       if (!validGoalNode.getBooleanValue())
          return false;
 
-      RobotSide nodeSide = nodeToExpand.getRobotSide();
-      if (goalNodes.get(nodeSide).equals(nodeToExpand))
+      if (nodeToExpand.equals(goalNode))
       {
-         endNode = goalNodes.get(nodeSide.getOppositeSide());
+         endNode = goalNode;
          graph.checkAndSetEdge(nodeToExpand, endNode, 0.0);
          return true;
       }
@@ -408,7 +402,7 @@ public class AStarFootstepPlanner implements BodyPathAndFootstepPlanner
       return false;
    }
 
-   private void checkAndHandleBestEffortNode(FootstepNode nodeToExpand)
+   private void checkAndHandleBestEffortNode(FootstanceNode nodeToExpand)
    {
       if (!parameters.getReturnBestEffortPlan())
          return;
@@ -416,8 +410,7 @@ public class AStarFootstepPlanner implements BodyPathAndFootstepPlanner
       if (graph.getPathFromStart(nodeToExpand).size() - 1 < parameters.getMinimumStepsForBestEffortPlan())
          return;
 
-      if (endNode == null || heuristics.compute(nodeToExpand, goalNodes.get(nodeToExpand.getRobotSide())) < heuristics
-            .compute(endNode, goalNodes.get(endNode.getRobotSide())))
+      if (endNode == null || heuristics.compute(nodeToExpand, goalNode) < heuristics.compute(endNode, goalNode))
       {
          if (listener != null)
             listener.reportLowestCostNodeList(graph.getPathFromStart(nodeToExpand));

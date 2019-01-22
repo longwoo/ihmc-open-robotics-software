@@ -8,6 +8,7 @@ import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.footstepPlanning.graphSearch.footstepSnapping.FootstepNodeSnapData;
 import us.ihmc.footstepPlanning.graphSearch.footstepSnapping.FootstepNodeSnapperReadOnly;
+import us.ihmc.footstepPlanning.graphSearch.graph.FootstanceNode;
 import us.ihmc.footstepPlanning.graphSearch.graph.FootstepNode;
 import us.ihmc.footstepPlanning.graphSearch.listeners.BipedalFootstepPlannerListener;
 import us.ihmc.idl.IDLSequence.Object;
@@ -20,10 +21,10 @@ import java.util.List;
 public abstract class MessageBasedPlannerListener implements BipedalFootstepPlannerListener
 {
    private final FootstepNodeSnapperReadOnly snapper;
-   private final HashMap<FootstepNode, BipedalFootstepPlannerNodeRejectionReason> rejectionReasons = new HashMap<>();
-   private final HashMap<FootstepNode, List<FootstepNode>> childMap = new HashMap<>();
+   private final HashMap<FootstanceNode, BipedalFootstepPlannerNodeRejectionReason> rejectionReasons = new HashMap<>();
+   private final HashMap<FootstanceNode, List<FootstanceNode>> childMap = new HashMap<>();
    private final HashSet<PlannerCell> exploredCells = new HashSet<>();
-   private final List<FootstepNode> lowestCostPlan = new ArrayList<>();
+   private final List<FootstanceNode> lowestCostPlan = new ArrayList<>();
 
    private final long occupancyMapBroadcastDt;
    private long lastBroadcastTime = -1;
@@ -35,7 +36,7 @@ public abstract class MessageBasedPlannerListener implements BipedalFootstepPlan
    }
 
    @Override
-   public void addNode(FootstepNode node, FootstepNode previousNode)
+   public void addNode(FootstanceNode node, FootstanceNode previousNode)
    {
       if (previousNode == null)
       {
@@ -47,19 +48,20 @@ public abstract class MessageBasedPlannerListener implements BipedalFootstepPlan
       else
       {
          childMap.computeIfAbsent(previousNode, n -> new ArrayList<>()).add(node);
-         exploredCells.add(new PlannerCell(node.getXIndex(), node.getYIndex()));
+         exploredCells.add(new PlannerCell(node.getSwingNode().getXIndex(), node.getStanceNode().getYIndex()));
+         exploredCells.add(new PlannerCell(node.getStanceNode().getXIndex(), node.getStanceNode().getYIndex()));
       }
    }
 
    @Override
-   public void reportLowestCostNodeList(List<FootstepNode> plan)
+   public void reportLowestCostNodeList(List<FootstanceNode> plan)
    {
       lowestCostPlan.clear();
       lowestCostPlan.addAll(plan);
    }
 
    @Override
-   public void rejectNode(FootstepNode rejectedNode, FootstepNode parentNode, BipedalFootstepPlannerNodeRejectionReason reason)
+   public void rejectNode(FootstanceNode rejectedNode, BipedalFootstepPlannerNodeRejectionReason reason)
    {
       rejectionReasons.put(rejectedNode, reason);
    }
@@ -86,7 +88,7 @@ public abstract class MessageBasedPlannerListener implements BipedalFootstepPlan
    }
 
    @Override
-   public void plannerFinished(List<FootstepNode> plan)
+   public void plannerFinished(List<FootstanceNode> plan)
    {
       FootstepPlannerOccupancyMapMessage occupancyMapMessage = packOccupancyMapMessage();
       broadcastOccupancyMap(occupancyMapMessage);
@@ -121,9 +123,9 @@ public abstract class MessageBasedPlannerListener implements BipedalFootstepPlan
       nodeDataList.clear();
       for (int i = 0; i < lowestCostPlan.size(); i++)
       {
-         FootstepNode node = lowestCostPlan.get(i);
+         FootstanceNode node = lowestCostPlan.get(i);
          FootstepNodeDataMessage nodeDataMessage = nodeDataList.add();
-         setNodeDataMessage(nodeDataMessage, node, -1);
+         setNodeDataMessage(nodeDataMessage, node.getStanceNode(), -1);
       }
 
       nodeDataListMessage.setIsFootstepGraph(false);
@@ -149,5 +151,4 @@ public abstract class MessageBasedPlannerListener implements BipedalFootstepPlan
       Quaternion snapRotationToSet = nodeDataMessage.getSnapRotation();
       snapData.getSnapTransform().get(snapRotationToSet, snapTranslationToSet);
    }
-
 }

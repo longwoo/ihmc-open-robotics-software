@@ -4,13 +4,13 @@ import controller_msgs.msg.dds.FootstepNodeDataListMessage;
 import controller_msgs.msg.dds.FootstepNodeDataMessage;
 import controller_msgs.msg.dds.FootstepPlannerCellMessage;
 import controller_msgs.msg.dds.FootstepPlannerOccupancyMapMessage;
-import gnu.trove.map.hash.TIntObjectHashMap;
 import us.ihmc.commons.lists.RecyclingArrayList;
 import us.ihmc.concurrent.ConcurrentCopier;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.footstepPlanning.graphSearch.footstepSnapping.FootstepNodeSnapData;
 import us.ihmc.footstepPlanning.graphSearch.footstepSnapping.FootstepNodeSnapperReadOnly;
+import us.ihmc.footstepPlanning.graphSearch.graph.FootstanceNode;
 import us.ihmc.footstepPlanning.graphSearch.graph.FootstepNode;
 import us.ihmc.footstepPlanning.graphSearch.listeners.BipedalFootstepPlannerListener;
 import us.ihmc.idl.IDLSequence.Object;
@@ -21,10 +21,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class StagePlannerListener implements BipedalFootstepPlannerListener
 {
    private final FootstepNodeSnapperReadOnly snapper;
-   private final HashMap<FootstepNode, BipedalFootstepPlannerNodeRejectionReason> rejectionReasons = new HashMap<>();
-   private final HashMap<FootstepNode, List<FootstepNode>> childMap = new HashMap<>();
+   private final HashMap<FootstanceNode, BipedalFootstepPlannerNodeRejectionReason> rejectionReasons = new HashMap<>();
+   private final HashMap<FootstanceNode, List<FootstanceNode>> childMap = new HashMap<>();
    private final HashSet<PlannerCell> exploredCells = new HashSet<>();
-   private final List<FootstepNode> lowestCostPlan = new ArrayList<>();
+   private final List<FootstanceNode> lowestCostPlan = new ArrayList<>();
 
    private final FootstepPlannerOccupancyMapMessage occupancyMapMessage = new FootstepPlannerOccupancyMapMessage();
    private final FootstepNodeDataListMessage nodeDataListMessage = new FootstepNodeDataListMessage();
@@ -48,7 +48,7 @@ public class StagePlannerListener implements BipedalFootstepPlannerListener
    }
 
    @Override
-   public void addNode(FootstepNode node, FootstepNode previousNode)
+   public void addNode(FootstanceNode node, FootstanceNode previousNode)
    {
       if (previousNode == null)
       {
@@ -60,21 +60,20 @@ public class StagePlannerListener implements BipedalFootstepPlannerListener
       else
       {
          childMap.computeIfAbsent(previousNode, n -> new ArrayList<>()).add(node);
-         PlannerCell plannerCell = new PlannerCell(node.getXIndex(), node.getYIndex());
-
-         exploredCells.add(plannerCell);
+         exploredCells.add(new PlannerCell(node.getSwingNode().getXIndex(), node.getSwingNode().getYIndex()));
+         exploredCells.add(new PlannerCell(node.getStanceNode().getXIndex(), node.getStanceNode().getYIndex()));
       }
    }
 
    @Override
-   public void reportLowestCostNodeList(List<FootstepNode> plan)
+   public void reportLowestCostNodeList(List<FootstanceNode> plan)
    {
       lowestCostPlan.clear();
       lowestCostPlan.addAll(plan);
    }
 
    @Override
-   public void rejectNode(FootstepNode rejectedNode, FootstepNode parentNode, BipedalFootstepPlannerNodeRejectionReason reason)
+   public void rejectNode(FootstanceNode rejectedNode, BipedalFootstepPlannerNodeRejectionReason reason)
    {
       rejectionReasons.put(rejectedNode, reason);
    }
@@ -98,7 +97,7 @@ public class StagePlannerListener implements BipedalFootstepPlannerListener
    }
 
    @Override
-   public void plannerFinished(List<FootstepNode> plan)
+   public void plannerFinished(List<FootstanceNode> plan)
    {
       updateOccupiedCells();
    }
@@ -124,7 +123,7 @@ public class StagePlannerListener implements BipedalFootstepPlannerListener
       nodeData.clear();
       for (int i = 0; i < lowestCostPlan.size(); i++)
       {
-         FootstepNode node = lowestCostPlan.get(i);
+         FootstepNode node = lowestCostPlan.get(i).getSwingNode();
          FootstepNodeDataMessage nodeDataMessage = nodeDataMessageList.add();
          setNodeDataMessage(nodeDataMessage, node, -1);
       }

@@ -1,5 +1,6 @@
 package us.ihmc.footstepPlanning.graphSearch.heuristics;
 
+import us.ihmc.footstepPlanning.graphSearch.graph.FootstanceNode;
 import us.ihmc.footstepPlanning.graphSearch.graph.FootstepNode;
 import us.ihmc.yoVariables.providers.DoubleProvider;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
@@ -19,10 +20,10 @@ public abstract class CostToGoHeuristics
       return weight.getValue();
    }
 
-   public double compute(FootstepNode node, FootstepNode goalNode)
+   public double compute(FootstanceNode node, FootstanceNode goalNode)
    {
       return weight.getValue() * computeHeuristics(node, goalNode);
    }
 
-   protected abstract double computeHeuristics(FootstepNode node, FootstepNode goalNode);
+   protected abstract double computeHeuristics(FootstanceNode node, FootstanceNode goalNode);
 }

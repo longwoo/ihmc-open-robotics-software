@@ -7,7 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 
 /**
- * Class that maintains a directed graph of FootstepNodes.
+ * Class that maintains a directed graph of FootstanceNodes.
  *
  * The graph has to be connected and is grown by adding edges to known or new nodes. These
  * edges must start at known nodes. The class is initialized with a start node and maintains
@@ -18,10 +18,10 @@ import java.util.List;
 public class FootstepGraph
 {
    private final HashMap<FootstepEdge, EdgeCost> edgeCostMap = new HashMap<>();
-   private final HashMap<FootstepNode, NodeCost> nodeCostMap = new HashMap<>();
+   private final HashMap<FootstanceNode, NodeCost> nodeCostMap = new HashMap<>();
 
-   private final HashMap<FootstepNode, HashSet<FootstepEdge>> outgoingEdges = new HashMap<>();
-   private final HashMap<FootstepNode, FootstepEdge> incomingBestEdge = new HashMap<>();
+   private final HashMap<FootstanceNode, HashSet<FootstepEdge>> outgoingEdges = new HashMap<>();
+   private final HashMap<FootstanceNode, FootstepEdge> incomingBestEdge = new HashMap<>();
 
    /**
     * Removes all nodes and edges stored in the graph and
@@ -29,7 +29,7 @@ public class FootstepGraph
     *
     * @param startNode start node of the new graph
     */
-   public void initialize(FootstepNode startNode)
+   public void initialize(FootstanceNode startNode)
    {
       edgeCostMap.clear();
       nodeCostMap.clear();
@@ -49,7 +49,7 @@ public class FootstepGraph
     * @param endNode
     * @param transitionCost
     */
-   public void checkAndSetEdge(FootstepNode startNode, FootstepNode endNode, double transitionCost)
+   public void checkAndSetEdge(FootstanceNode startNode, FootstanceNode endNode, double transitionCost)
    {
       checkNodeExists(startNode);
 
@@ -84,7 +84,7 @@ public class FootstepGraph
    /**
     * Gets the cost associated to traveling from the start node to the given node.
     */
-   public double getCostFromStart(FootstepNode node)
+   public double getCostFromStart(FootstanceNode node)
    {
       checkNodeExists(node);
 
@@ -95,17 +95,17 @@ public class FootstepGraph
     * Returns all nodes required to travel from the start node to the given node.
     * The nodes returned include start and end node of the path.
     */
-   public List<FootstepNode> getPathFromStart(FootstepNode node)
+   public List<FootstanceNode> getPathFromStart(FootstanceNode node)
    {
       checkNodeExists(node);
 
-      ArrayList<FootstepNode> path = new ArrayList<>();
+      ArrayList<FootstanceNode> path = new ArrayList<>();
       path.add(node);
 
       FootstepEdge edgeFromParent = incomingBestEdge.get(node);
       while (edgeFromParent.getStartNode() != null)
       {
-         FootstepNode parentNode = edgeFromParent.getStartNode();
+         FootstanceNode parentNode = edgeFromParent.getStartNode();
          path.add(parentNode);
          edgeFromParent = incomingBestEdge.get(parentNode);
       }
@@ -118,12 +118,12 @@ public class FootstepGraph
     * Will check if a node exists in the graph.
     * @param node
     */
-   public boolean doesNodeExist(FootstepNode node)
+   public boolean doesNodeExist(FootstanceNode node)
    {
       return nodeCostMap.containsKey(node);
    }
 
-   private void updateChildCostsRecursively(FootstepNode node)
+   private void updateChildCostsRecursively(FootstanceNode node)
    {
       if (!outgoingEdges.containsKey(node))
          return;
@@ -132,7 +132,7 @@ public class FootstepGraph
       for (FootstepEdge outgoingEdge : outgoingEdges.get(node))
       {
          double newCost = parentNodeCost + edgeCostMap.get(outgoingEdge).getEdgeCost();
-         FootstepNode childNode = outgoingEdge.getEndNode();
+         FootstanceNode childNode = outgoingEdge.getEndNode();
 
          double oldCost = nodeCostMap.get(childNode).getNodeCost();
          if (oldCost <= newCost)
@@ -144,7 +144,7 @@ public class FootstepGraph
       }
    }
 
-   private void checkNodeExists(FootstepNode node)
+   private void checkNodeExists(FootstanceNode node)
    {
       if (!nodeCostMap.containsKey(node))
          throw new RuntimeException("Node has not been added to graph yet.");

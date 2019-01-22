@@ -1,19 +1,19 @@
 package us.ihmc.footstepPlanning.graphSearch.listeners;
 
-import us.ihmc.footstepPlanning.graphSearch.graph.FootstepNode;
+import us.ihmc.footstepPlanning.graphSearch.graph.FootstanceNode;
 import us.ihmc.footstepPlanning.graphSearch.graph.visualization.BipedalFootstepPlannerNodeRejectionReason;
 
 import java.util.List;
 
 public interface BipedalFootstepPlannerListener
 {
-   void addNode(FootstepNode node, FootstepNode previousNode);
+   void addNode(FootstanceNode node, FootstanceNode previousNode);
 
-   void rejectNode(FootstepNode rejectedNode, FootstepNode parentNode, BipedalFootstepPlannerNodeRejectionReason reason);
+   void rejectNode(FootstanceNode rejectedNode, BipedalFootstepPlannerNodeRejectionReason reason);
 
-   void plannerFinished(List<FootstepNode> plan);
+   void plannerFinished(List<FootstanceNode> plan);
 
-   void reportLowestCostNodeList(List<FootstepNode> plan);
+   void reportLowestCostNodeList(List<FootstanceNode> plan);
 
    void tickAndUpdate();
 }

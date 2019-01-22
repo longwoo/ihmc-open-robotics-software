@@ -4,6 +4,7 @@ import java.util.HashSet;
 
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
+import us.ihmc.footstepPlanning.graphSearch.graph.FootstanceNode;
 import us.ihmc.footstepPlanning.graphSearch.parameters.FootstepPlannerParameters;
 import us.ihmc.footstepPlanning.graphSearch.graph.FootstepNode;
 import us.ihmc.robotics.referenceFrames.PoseReferenceFrame;
@@ -20,7 +21,7 @@ public class SimpleSideBasedExpansion implements FootstepNodeExpansion
    }
 
    @Override
-   public HashSet<FootstepNode> expandNode(FootstepNode node)
+   public HashSet<FootstanceNode> expandNode(FootstanceNode parentNode)
    {
       double maxYaw = parameters.getMaximumStepYaw();
       double defaultStepWidth = parameters.getIdealFootstepWidth();
@@ -29,7 +30,8 @@ public class SimpleSideBasedExpansion implements FootstepNodeExpansion
       double[] stepWidths = new double[] {parameters.getMinimumStepWidth(), defaultStepWidth - FootstepNode.gridSizeXY, defaultStepWidth, defaultStepWidth + FootstepNode.gridSizeXY, parameters.getMaximumStepWidth()};
       double[] stepYaws = new double[] {parameters.getMinimumStepYaw(), FootstepNode.gridSizeYaw, maxYaw};
 
-      HashSet<FootstepNode> neighbors = new HashSet<>();
+      HashSet<FootstanceNode> neighbors = new HashSet<>();
+      FootstepNode node = parentNode.getStanceNode();
 
       FramePose3D stanceFootPose = new FramePose3D(worldFrame);
       stanceFootPose.setOrientationYawPitchRoll(node.getYaw(), 0.0, 0.0);
@@ -52,7 +54,7 @@ public class SimpleSideBasedExpansion implements FootstepNodeExpansion
             forwardStep.setX(stepLength);
             forwardStep.setY(ySign * defaultStepWidth);
             forwardStep.changeFrame(worldFrame);
-            neighbors.add(new FootstepNode(forwardStep.getX(), forwardStep.getY(), node.getYaw() + ySign * yaw, stepSide));
+            neighbors.add(parentNode.createChild(new FootstepNode(forwardStep.getX(), forwardStep.getY(), node.getYaw() + ySign * yaw, stepSide)));
          }
       }
 
@@ -63,7 +65,7 @@ public class SimpleSideBasedExpansion implements FootstepNodeExpansion
          FramePose3D sideStep = new FramePose3D(stanceFrame);
          sideStep.setY(ySign * stepWidth);
          sideStep.changeFrame(worldFrame);
-         neighbors.add(new FootstepNode(sideStep.getX(), sideStep.getY(), node.getYaw(), stepSide));
+         neighbors.add(parentNode.createChild(new FootstepNode(sideStep.getX(), sideStep.getY(), node.getYaw(), stepSide)));
       }
 
       // turn in place
@@ -72,7 +74,7 @@ public class SimpleSideBasedExpansion implements FootstepNodeExpansion
       turnStep.setX(-defaultStepWidth * Math.sin(maxYaw) / 2.0);
       turnStep.changeFrame(worldFrame);
       double yaw = node.getYaw() + ySign * maxYaw;
-      neighbors.add(new FootstepNode(turnStep.getX(), turnStep.getY(), yaw, stepSide));
+      neighbors.add(parentNode.createChild(new FootstepNode(turnStep.getX(), turnStep.getY(), yaw, stepSide)));
 
       return neighbors;
    }

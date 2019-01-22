@@ -1,5 +1,6 @@
 package us.ihmc.footstepPlanning.graphSearch.heuristics;
 
+import us.ihmc.footstepPlanning.graphSearch.graph.FootstanceNode;
 import us.ihmc.footstepPlanning.graphSearch.graph.FootstepNode;
 import us.ihmc.yoVariables.providers.DoubleProvider;
 
@@ -11,8 +12,8 @@ public class EuclideanDistanceHeuristics extends CostToGoHeuristics
    }
 
    @Override
-   protected double computeHeuristics(FootstepNode node, FootstepNode goalNode)
+   protected double computeHeuristics(FootstanceNode node, FootstanceNode goalNode)
    {
-      return node.euclideanDistance(goalNode);
+      return node.getMidStancePose().getPositionDistance(goalNode.getMidStancePose());
    }
 }

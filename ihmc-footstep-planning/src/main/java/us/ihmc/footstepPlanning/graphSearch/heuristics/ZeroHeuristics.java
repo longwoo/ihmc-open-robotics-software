@@ -1,5 +1,6 @@
 package us.ihmc.footstepPlanning.graphSearch.heuristics;
 
+import us.ihmc.footstepPlanning.graphSearch.graph.FootstanceNode;
 import us.ihmc.footstepPlanning.graphSearch.graph.FootstepNode;
 import us.ihmc.yoVariables.variable.YoDouble;
 
@@ -11,7 +12,7 @@ public class ZeroHeuristics extends CostToGoHeuristics
    }
 
    @Override
-   protected double computeHeuristics(FootstepNode node, FootstepNode goalNode)
+   protected double computeHeuristics(FootstanceNode node, FootstanceNode goalNode)
    {
       return 0.0;
    }

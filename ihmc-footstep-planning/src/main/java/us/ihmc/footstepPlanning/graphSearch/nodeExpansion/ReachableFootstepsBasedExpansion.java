@@ -4,18 +4,18 @@ import java.util.HashSet;
 
 import us.ihmc.euclid.referenceFrame.FramePose3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
+import us.ihmc.footstepPlanning.graphSearch.graph.FootstanceNode;
 import us.ihmc.footstepPlanning.graphSearch.graph.FootstepNode;
 import us.ihmc.robotics.referenceFrames.PoseReferenceFrame;
 import us.ihmc.robotics.robotSide.RobotSide;
+
 /**
  * This class expands the node based on a fixed number of defined configurations.
  * The list of neighbours generated is robot-specific.
  * @author Shlok Agarwal
- *
  */
 public abstract class ReachableFootstepsBasedExpansion implements FootstepNodeExpansion
 {
-
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
 
    private ReferenceFrame stanceFrame;
@@ -24,7 +24,7 @@ public abstract class ReachableFootstepsBasedExpansion implements FootstepNodeEx
    private HashSet<FootstepNode> neighbors;
 
    @Override
-   public HashSet<FootstepNode> expandNode(FootstepNode node)
+   public HashSet<FootstanceNode> expandNode(FootstanceNode parentNode)
    {
       neighbors = new HashSet<>();
 

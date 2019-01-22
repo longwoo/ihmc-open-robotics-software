@@ -9,6 +9,7 @@ import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.footstepPlanning.graphSearch.footstepSnapping.FootstepNodeSnapData;
 import us.ihmc.footstepPlanning.graphSearch.footstepSnapping.FootstepNodeSnapperReadOnly;
+import us.ihmc.footstepPlanning.graphSearch.graph.FootstanceNode;
 import us.ihmc.footstepPlanning.graphSearch.graph.FootstepNode;
 import us.ihmc.footstepPlanning.graphSearch.listeners.BipedalFootstepPlannerListener;
 import us.ihmc.idl.IDLSequence.Object;
@@ -47,17 +48,17 @@ public class MultiStagePlannerListener implements BipedalFootstepPlannerListener
    }
 
    @Override
-   public void addNode(FootstepNode node, FootstepNode previousNode)
+   public void addNode(FootstanceNode node, FootstanceNode previousNode)
    {
    }
 
    @Override
-   public void reportLowestCostNodeList(List<FootstepNode> plan)
+   public void reportLowestCostNodeList(List<FootstanceNode> plan)
    {
    }
 
    @Override
-   public void rejectNode(FootstepNode rejectedNode, FootstepNode parentNode, BipedalFootstepPlannerNodeRejectionReason reason)
+   public void rejectNode(FootstanceNode rejectedNode, FootstanceNode parentNode, BipedalFootstepPlannerNodeRejectionReason reason)
    {
    }
 
@@ -113,7 +114,7 @@ public class MultiStagePlannerListener implements BipedalFootstepPlannerListener
    }
 
    @Override
-   public void plannerFinished(List<FootstepNode> plan)
+   public void plannerFinished(List<FootstanceNode> plan)
    {
       FootstepPlannerOccupancyMapMessage occupancyMapMessage = new FootstepPlannerOccupancyMapMessage();
       for (StagePlannerListener listener : listeners)

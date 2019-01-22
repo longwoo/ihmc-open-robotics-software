@@ -1,12 +1,11 @@
 package us.ihmc.footstepPlanning.graphSearch.graph;
 
-import java.util.Random;
-
 import us.ihmc.euclid.tools.EuclidCoreRandomTools;
 import us.ihmc.euclid.tuple2D.Point2D;
-import us.ihmc.euclid.tuple2D.interfaces.Point2DReadOnly;
 import us.ihmc.robotics.geometry.AngleTools;
 import us.ihmc.robotics.robotSide.RobotSide;
+
+import java.util.Random;
 
 public class FootstepNode
 {
