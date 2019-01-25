@@ -151,7 +151,7 @@ public class BodyCollisionNodeChecker extends FootstepNodeChecker
       for (int i = 0; i < nearbyRegions.size(); i++)
       {
          ConvexPolytope planarRegionPolytope = planarRegionPolytopes.get(nearbyRegions.get(i));
-         if (collisionDetector.arePolytopesColliding(bodyCollisionPolytope, planarRegionPolytope, tempPoint1, tempPoint2))
+         if (planarRegionPolytope != null && collisionDetector.arePolytopesColliding(bodyCollisionPolytope, planarRegionPolytope, tempPoint1, tempPoint2))
          {
             return false;
          }
