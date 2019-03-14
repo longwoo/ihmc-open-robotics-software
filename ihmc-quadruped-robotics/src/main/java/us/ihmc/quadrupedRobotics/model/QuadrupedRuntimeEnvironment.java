@@ -25,7 +25,6 @@ public class QuadrupedRuntimeEnvironment
    private final YoVariableRegistry parentRegistry;
    private final YoGraphicsListRegistry graphicsListRegistry;
    private final YoGraphicsListRegistry graphicsListRegistryForDetachedOverhead;
-   private final JointDesiredOutputList jointDesiredOutputList;
    private final ControllerCoreOptimizationSettings controllerCoreOptimizationSettings;
    private final CenterOfMassDataHolderReadOnly centerOfMassDataHolder;
    private final HighLevelControllerParameters highLevelControllerParameters;
@@ -41,9 +40,8 @@ public class QuadrupedRuntimeEnvironment
    private final QuadrantDependentList<FootSwitchInterface> footSwitches;
 
    public QuadrupedRuntimeEnvironment(double controlDT, YoDouble robotTimestamp, FullQuadrupedRobotModel fullRobotModel,
-                                      ControllerCoreOptimizationSettings controllerCoreOptimizationSettings, JointDesiredOutputList jointDesiredOutputList,
-                                      YoVariableRegistry parentRegistry, YoGraphicsListRegistry graphicsListRegistry,
-                                      YoGraphicsListRegistry graphicsListRegistryForDetachedOverhead,
+                                      ControllerCoreOptimizationSettings controllerCoreOptimizationSettings, YoVariableRegistry parentRegistry,
+                                      YoGraphicsListRegistry graphicsListRegistry, YoGraphicsListRegistry graphicsListRegistryForDetachedOverhead,
                                       QuadrantDependentList<ContactablePlaneBody> contactableFeet, List<ContactablePlaneBody> contactablePlaneBodies,
                                       CenterOfMassDataHolderReadOnly centerOfMassDataHolder, QuadrantDependentList<FootSwitchInterface> footSwitches,
                                       double gravity, HighLevelControllerParameters highLevelControllerParameters, QuadrupedSitDownParameters sitDownParameters,
@@ -60,7 +58,6 @@ public class QuadrupedRuntimeEnvironment
       this.contactableFeet = contactableFeet;
       this.contactablePlaneBodies = contactablePlaneBodies;
       this.gravityZ = Math.abs(gravity);
-      this.jointDesiredOutputList = jointDesiredOutputList;
       this.centerOfMassDataHolder = centerOfMassDataHolder;
       this.highLevelControllerParameters = highLevelControllerParameters;
       this.sitDownParameters = sitDownParameters;
@@ -81,11 +78,6 @@ public class QuadrupedRuntimeEnvironment
    public FullQuadrupedRobotModel getFullRobotModel()
    {
       return fullRobotModel;
-   }
-
-   public JointDesiredOutputList getJointDesiredOutputList()
-   {
-      return jointDesiredOutputList;
    }
 
    public YoVariableRegistry getParentRegistry()

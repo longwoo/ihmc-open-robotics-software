@@ -304,7 +304,7 @@ public class QuadrupedSimulationFactory
    public void createControllerManager()
    {
       QuadrupedRuntimeEnvironment runtimeEnvironment = new QuadrupedRuntimeEnvironment(controlDT.get(), sdfRobot.get().getYoTime(), fullRobotModel.get(),
-                                                                                       controllerCoreOptimizationSettings.get(), jointDesiredOutputList.get(),
+                                                                                       controllerCoreOptimizationSettings.get(),
                                                                                        sdfRobot.get().getRobotsYoVariableRegistry(), yoGraphicsListRegistry,
                                                                                        yoGraphicsListRegistryForDetachedOverhead, contactableFeet,
                                                                                        contactablePlaneBodies, centerOfMassDataHolder, footSwitches,
@@ -317,7 +317,7 @@ public class QuadrupedSimulationFactory
          throw new RuntimeException("Position Control Mode currently not supported");
       }
 
-      controllerManager = new QuadrupedControllerManager(runtimeEnvironment, physicalProperties.get(), initialForceControlState.get(), null);
+      controllerManager = new QuadrupedControllerManager(runtimeEnvironment, jointDesiredOutputList.get(), physicalProperties.get(), initialForceControlState.get(), null);
    }
 
    private void createPoseCommunicator()

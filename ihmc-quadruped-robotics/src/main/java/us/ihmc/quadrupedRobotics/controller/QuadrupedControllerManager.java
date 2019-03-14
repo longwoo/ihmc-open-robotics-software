@@ -95,12 +95,13 @@ public class QuadrupedControllerManager implements RobotController, CloseableAnd
 
    private StateEstimatorModeSubscriber stateEstimatorModeSubscriber;
 
-   public QuadrupedControllerManager(QuadrupedRuntimeEnvironment runtimeEnvironment, QuadrupedPhysicalProperties physicalProperties,
-                                     HighLevelControllerName initialControllerState, HighLevelControllerState calibrationState)
+   public QuadrupedControllerManager(QuadrupedRuntimeEnvironment runtimeEnvironment, JointDesiredOutputList jointDesiredOutputList,
+                                     QuadrupedPhysicalProperties physicalProperties, HighLevelControllerName initialControllerState,
+                                     HighLevelControllerState calibrationState)
    {
       this.controllerToolbox = new QuadrupedControllerToolbox(runtimeEnvironment, physicalProperties, registry, runtimeEnvironment.getGraphicsListRegistry());
       this.runtimeEnvironment = runtimeEnvironment;
-      this.lowLevelControllerOutput = runtimeEnvironment.getJointDesiredOutputList();
+      this.lowLevelControllerOutput = jointDesiredOutputList;
       this.yoLowLevelOneDoFJointDesiredDataHolder = new YoLowLevelOneDoFJointDesiredDataHolder(
             runtimeEnvironment.getFullRobotModel().getControllableOneDoFJoints(), registry);
 
@@ -129,12 +130,12 @@ public class QuadrupedControllerManager implements RobotController, CloseableAnd
       controlManagerFactory.getOrCreateJointSpaceManager();
 
       // Initialize output processor
-      StateChangeSmootherComponent stateChangeSmootherComponent = new StateChangeSmootherComponent(runtimeEnvironment, registry);
-      JointIntegratorComponent jointControlComponent = new JointIntegratorComponent(runtimeEnvironment, registry);
+      StateChangeSmootherComponent stateChangeSmootherComponent = new StateChangeSmootherComponent(runtimeEnvironment, jointDesiredOutputList, registry);
+      JointIntegratorComponent jointIntegrator = new JointIntegratorComponent(jointDesiredOutputList, runtimeEnvironment.getControlDT(), registry);
       controlManagerFactory.getOrCreateFeetManager().attachStateChangedListener(stateChangeSmootherComponent.createFiniteStateMachineStateChangedListener());
       OutputProcessorBuilder outputProcessorBuilder = new OutputProcessorBuilder(runtimeEnvironment.getFullRobotModel());
       outputProcessorBuilder.addComponent(stateChangeSmootherComponent);
-      outputProcessorBuilder.addComponent(jointControlComponent);
+      outputProcessorBuilder.addComponent(jointIntegrator);
       outputProcessor = outputProcessorBuilder.build();
 
       requestedControllerState.set(null);
@@ -152,7 +153,7 @@ public class QuadrupedControllerManager implements RobotController, CloseableAnd
          initialControllerState = runtimeEnvironment.getHighLevelControllerParameters().getDefaultInitialControllerState();
       }
 
-      this.stateMachine = buildStateMachine(runtimeEnvironment, initialControllerState, calibrationState);
+      this.stateMachine = buildStateMachine(runtimeEnvironment, jointDesiredOutputList, initialControllerState, calibrationState);
    }
 
    public State getState(HighLevelControllerName state)
@@ -272,13 +273,13 @@ public class QuadrupedControllerManager implements RobotController, CloseableAnd
    }
 
    private StateMachine<HighLevelControllerName, HighLevelControllerState> buildStateMachine(QuadrupedRuntimeEnvironment runtimeEnvironment,
+                                                                                             JointDesiredOutputList jointDesiredOutputList,
                                                                                              HighLevelControllerName initialControllerState,
                                                                                              HighLevelControllerState calibrationState)
    {
       OneDoFJointBasics[] controlledJoints = runtimeEnvironment.getFullRobotModel().getControllableOneDoFJoints();
       HighLevelControllerParameters highLevelControllerParameters = runtimeEnvironment.getHighLevelControllerParameters();
       QuadrupedSitDownParameters sitDownParameters = runtimeEnvironment.getSitDownParameters();
-      JointDesiredOutputListReadOnly jointDesiredOutputList = runtimeEnvironment.getJointDesiredOutputList();
 
       DoNothingControllerState doNothingState = new DoNothingControllerState(controlledJoints, highLevelControllerParameters);
       StandPrepControllerState standPrepState = new StandPrepControllerState(controlledJoints, highLevelControllerParameters, jointDesiredOutputList);

@@ -17,10 +17,10 @@ public class JointIntegratorComponent implements OutputProcessorComponent
 
    private final double controlDT;
 
-   public JointIntegratorComponent(QuadrupedRuntimeEnvironment runtimeEnvironment, YoVariableRegistry parentRegistry)
+   public JointIntegratorComponent(JointDesiredOutputList jointDesiredOutputList, double controlDT, YoVariableRegistry parentRegistry)
    {
-      this.jointDesiredOutputList = runtimeEnvironment.getJointDesiredOutputList();
-      controlDT = runtimeEnvironment.getControlDT();
+      this.jointDesiredOutputList = jointDesiredOutputList;
+      this.controlDT = controlDT;
 
       parentRegistry.addChild(registry);
    }

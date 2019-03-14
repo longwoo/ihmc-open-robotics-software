@@ -30,11 +30,11 @@ public class StateChangeSmootherComponent implements OutputProcessorComponent
    private final YoDouble controlTimestamp;
    private final JointDesiredOutputList jointDesiredOutputList;
 
-   public StateChangeSmootherComponent(QuadrupedRuntimeEnvironment runtimeEnvironment, YoVariableRegistry parentRegistry)
+   public StateChangeSmootherComponent(QuadrupedRuntimeEnvironment runtimeEnvironment, JointDesiredOutputList jointDesiredOutputList, YoVariableRegistry parentRegistry)
    {
       this.controlDT = runtimeEnvironment.getControlDT();
       this.controlTimestamp = runtimeEnvironment.getRobotTimestamp();
-      this.jointDesiredOutputList = runtimeEnvironment.getJointDesiredOutputList();
+      this.jointDesiredOutputList = jointDesiredOutputList;
 
       alphaJointTorqueForStateChanges.set(0.0);
       timeAtHighLevelControllerStateChange.set(Double.NEGATIVE_INFINITY);
