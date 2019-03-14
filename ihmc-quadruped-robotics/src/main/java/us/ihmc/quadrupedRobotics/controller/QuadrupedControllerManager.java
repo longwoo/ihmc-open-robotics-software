@@ -414,7 +414,9 @@ public class QuadrupedControllerManager implements RobotController, CloseableAnd
       }
 
       yoLowLevelOneDoFJointDesiredDataHolder.overwriteWith(lowLevelOneDoFJointDesiredDataHolder);
-      lowLevelControllerOutput.overwriteWith(lowLevelOneDoFJointDesiredDataHolder);
+
+      lowLevelControllerOutput.clear();
+      lowLevelControllerOutput.overwriteWith(yoLowLevelOneDoFJointDesiredDataHolder);
    }
 
    public void createControllerNetworkSubscriber(String robotName, RealtimeRos2Node realtimeRos2Node)
