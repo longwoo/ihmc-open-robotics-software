@@ -7,17 +7,18 @@ import us.ihmc.mecano.multiBodySystem.interfaces.OneDoFJointBasics;
 import us.ihmc.quadrupedRobotics.model.QuadrupedRuntimeEnvironment;
 import us.ihmc.robotModels.FullRobotModel;
 import us.ihmc.sensorProcessing.outputData.JointDesiredOutputList;
+import us.ihmc.sensorProcessing.outputData.JointDesiredOutputListBasics;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 
 public class JointIntegratorComponent implements OutputProcessorComponent
 {
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
-   private final JointDesiredOutputList jointDesiredOutputList;
+   private final JointDesiredOutputListBasics jointDesiredOutputList;
    private final List<QuadrupedJointIntegrator> quadrupedJoints = new ArrayList<>();
 
    private final double controlDT;
 
-   public JointIntegratorComponent(JointDesiredOutputList jointDesiredOutputList, double controlDT, YoVariableRegistry parentRegistry)
+   public JointIntegratorComponent(JointDesiredOutputListBasics jointDesiredOutputList, double controlDT, YoVariableRegistry parentRegistry)
    {
       this.jointDesiredOutputList = jointDesiredOutputList;
       this.controlDT = controlDT;

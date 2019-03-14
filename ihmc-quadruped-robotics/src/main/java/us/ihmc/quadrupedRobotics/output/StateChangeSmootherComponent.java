@@ -10,6 +10,7 @@ import us.ihmc.robotics.math.filters.AlphaFilteredYoVariable;
 import us.ihmc.robotics.stateMachine.core.StateChangedListener;
 import us.ihmc.sensorProcessing.outputData.JointDesiredOutputBasics;
 import us.ihmc.sensorProcessing.outputData.JointDesiredOutputList;
+import us.ihmc.sensorProcessing.outputData.JointDesiredOutputListBasics;
 import us.ihmc.tools.lists.PairList;
 import us.ihmc.yoVariables.parameters.DoubleParameter;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
@@ -28,9 +29,10 @@ public class StateChangeSmootherComponent implements OutputProcessorComponent
    private final YoDouble timeAtHighLevelControllerStateChange = new YoDouble("timeAtControllerStateChange", registry);
    private final double controlDT;
    private final YoDouble controlTimestamp;
-   private final JointDesiredOutputList jointDesiredOutputList;
+   private final JointDesiredOutputListBasics jointDesiredOutputList;
 
-   public StateChangeSmootherComponent(QuadrupedRuntimeEnvironment runtimeEnvironment, JointDesiredOutputList jointDesiredOutputList, YoVariableRegistry parentRegistry)
+   public StateChangeSmootherComponent(QuadrupedRuntimeEnvironment runtimeEnvironment, JointDesiredOutputListBasics jointDesiredOutputList,
+                                       YoVariableRegistry parentRegistry)
    {
       this.controlDT = runtimeEnvironment.getControlDT();
       this.controlTimestamp = runtimeEnvironment.getRobotTimestamp();

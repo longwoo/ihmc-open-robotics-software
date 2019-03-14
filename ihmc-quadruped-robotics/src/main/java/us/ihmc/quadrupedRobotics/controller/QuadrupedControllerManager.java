@@ -50,7 +50,6 @@ import us.ihmc.sensorProcessing.outputData.JointDesiredOutputList;
 import us.ihmc.sensorProcessing.outputData.JointDesiredOutputListReadOnly;
 import us.ihmc.sensorProcessing.outputData.JointDesiredOutputReadOnly;
 import us.ihmc.simulationconstructionset.util.RobotController;
-import us.ihmc.stateEstimation.humanoid.StateEstimatorController;
 import us.ihmc.stateEstimation.humanoid.StateEstimatorModeSubscriber;
 import us.ihmc.tools.thread.CloseableAndDisposable;
 import us.ihmc.tools.thread.CloseableAndDisposableRegistry;
@@ -130,8 +129,8 @@ public class QuadrupedControllerManager implements RobotController, CloseableAnd
       controlManagerFactory.getOrCreateJointSpaceManager();
 
       // Initialize output processor
-      StateChangeSmootherComponent stateChangeSmootherComponent = new StateChangeSmootherComponent(runtimeEnvironment, jointDesiredOutputList, registry);
-      JointIntegratorComponent jointIntegrator = new JointIntegratorComponent(jointDesiredOutputList, runtimeEnvironment.getControlDT(), registry);
+      StateChangeSmootherComponent stateChangeSmootherComponent = new StateChangeSmootherComponent(runtimeEnvironment, yoLowLevelOneDoFJointDesiredDataHolder, registry);
+      JointIntegratorComponent jointIntegrator = new JointIntegratorComponent(yoLowLevelOneDoFJointDesiredDataHolder, runtimeEnvironment.getControlDT(), registry);
       controlManagerFactory.getOrCreateFeetManager().attachStateChangedListener(stateChangeSmootherComponent.createFiniteStateMachineStateChangedListener());
       OutputProcessorBuilder outputProcessorBuilder = new OutputProcessorBuilder(runtimeEnvironment.getFullRobotModel());
       outputProcessorBuilder.addComponent(stateChangeSmootherComponent);
@@ -241,10 +240,14 @@ public class QuadrupedControllerManager implements RobotController, CloseableAnd
          statusMessageOutputManager.reportStatusMessage(walkingControllerFailureStatusMessage);
       }
 
+
+      copyJointDesiredsToJointOutput();
+
       // update output processor
       outputProcessor.update();
 
-      copyJointDesiredsToJoints();
+      lowLevelControllerOutput.clear();
+      lowLevelControllerOutput.overwriteWith(yoLowLevelOneDoFJointDesiredDataHolder);
 
       requestedControllerStateReference.set(null);
    }
@@ -401,22 +404,16 @@ public class QuadrupedControllerManager implements RobotController, CloseableAnd
       return time -> requestedControllerStateReference.get() != null && requestedControllerStateReference.get() == endState;
    }
 
-   private void copyJointDesiredsToJoints()
+   private void copyJointDesiredsToJointOutput()
    {
       JointDesiredOutputListReadOnly lowLevelOneDoFJointDesiredDataHolder = stateMachine.getCurrentState().getOutputForLowLevelController();
       for (int jointIndex = 0; jointIndex < lowLevelOneDoFJointDesiredDataHolder.getNumberOfJointsWithDesiredOutput(); jointIndex++)
       {
-         OneDoFJointBasics controlledJoint = lowLevelOneDoFJointDesiredDataHolder.getOneDoFJoint(jointIndex);
-         JointDesiredOutputReadOnly lowLevelJointData = lowLevelOneDoFJointDesiredDataHolder.getJointDesiredOutput(controlledJoint);
-
-         if (!lowLevelJointData.hasControlMode())
-            throw new NullPointerException("Joint: " + controlledJoint.getName() + " has no control mode.");
+         if (!lowLevelOneDoFJointDesiredDataHolder.getJointDesiredOutput(jointIndex).hasControlMode())
+            throw new NullPointerException("Joint: " + lowLevelOneDoFJointDesiredDataHolder.getOneDoFJoint(jointIndex).getName() + " has no control mode.");
       }
 
       yoLowLevelOneDoFJointDesiredDataHolder.overwriteWith(lowLevelOneDoFJointDesiredDataHolder);
-
-      lowLevelControllerOutput.clear();
-      lowLevelControllerOutput.overwriteWith(yoLowLevelOneDoFJointDesiredDataHolder);
    }
 
    public void createControllerNetworkSubscriber(String robotName, RealtimeRos2Node realtimeRos2Node)
