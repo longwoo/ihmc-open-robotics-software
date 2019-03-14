@@ -28,6 +28,9 @@ public class RobotControlTabController
    private Button standButton;
 
    @FXML
+   private Button freezeButton;
+
+   @FXML
    private CheckBox enablePoseTeleopControl;
 
    @FXML
@@ -94,6 +97,11 @@ public class RobotControlTabController
    {
       messager.submitMessage(QuadrupedUIMessagerAPI.FootstepPlanTopic, null);
       requestStanding();
+   }
+
+   public void requestFreezeState()
+   {
+      messager.submitMessage(QuadrupedUIMessagerAPI.DesiredControllerNameTopic, HighLevelControllerName.FREEZE_STATE);
    }
 
    public void requestStanding()

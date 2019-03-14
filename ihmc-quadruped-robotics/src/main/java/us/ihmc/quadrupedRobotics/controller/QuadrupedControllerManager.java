@@ -160,6 +160,11 @@ public class QuadrupedControllerManager implements RobotController, CloseableAnd
       return stateMachine.getState(state);
    }
 
+   public void requestControllerState(HighLevelControllerName state)
+   {
+      requestedControllerState.set(state);
+   }
+
    @Override
    public void initialize()
    {
@@ -311,6 +316,7 @@ public class QuadrupedControllerManager implements RobotController, CloseableAnd
                             createRequestedTransition(HighLevelControllerName.STAND_PREP_STATE));
       factory.addTransition(HighLevelControllerName.STAND_READY, sitDownStateName, createRequestedTransition(sitDownStateName));
       factory.addTransition(HighLevelControllerName.FREEZE_STATE, sitDownStateName, createRequestedTransition(sitDownStateName));
+      factory.addTransition(HighLevelControllerName.DO_NOTHING_BEHAVIOR, sitDownStateName, createRequestedTransition(sitDownStateName));
       factory.addTransition(HighLevelControllerName.FREEZE_STATE, HighLevelControllerName.STAND_PREP_STATE,
                             createRequestedTransition(HighLevelControllerName.STAND_PREP_STATE));
       factory.addTransition(HighLevelControllerName.STAND_PREP_STATE, HighLevelControllerName.FREEZE_STATE,
