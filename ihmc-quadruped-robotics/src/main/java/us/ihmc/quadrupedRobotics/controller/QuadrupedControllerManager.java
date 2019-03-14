@@ -278,7 +278,7 @@ public class QuadrupedControllerManager implements RobotController, CloseableAnd
       OneDoFJointBasics[] controlledJoints = runtimeEnvironment.getFullRobotModel().getControllableOneDoFJoints();
       HighLevelControllerParameters highLevelControllerParameters = runtimeEnvironment.getHighLevelControllerParameters();
       QuadrupedSitDownParameters sitDownParameters = runtimeEnvironment.getSitDownParameters();
-      JointDesiredOutputList jointDesiredOutputList = runtimeEnvironment.getJointDesiredOutputList();
+      JointDesiredOutputListReadOnly jointDesiredOutputList = runtimeEnvironment.getJointDesiredOutputList();
 
       DoNothingControllerState doNothingState = new DoNothingControllerState(controlledJoints, highLevelControllerParameters);
       StandPrepControllerState standPrepState = new StandPrepControllerState(controlledJoints, highLevelControllerParameters, jointDesiredOutputList);
