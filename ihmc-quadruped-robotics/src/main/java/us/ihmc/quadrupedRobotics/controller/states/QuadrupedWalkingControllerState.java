@@ -160,6 +160,7 @@ public class QuadrupedWalkingControllerState extends HighLevelControllerState im
       controlCoreToolbox.setupForInverseDynamicsSolver(controllerToolbox.getContactablePlaneBodies());
       controlCoreToolbox.setJointPrivilegedConfigurationParameters(runtimeEnvironment.getPrivilegedConfigurationParameters());
       FeedbackControlCommandList feedbackTemplate = controlManagerFactory.createFeedbackControlTemplate();
+      // FIXME this should use a different output list.
       controllerCore = new WholeBodyControllerCore(controlCoreToolbox, feedbackTemplate, runtimeEnvironment.getJointDesiredOutputList(), registry);
       controllerCoreOutput = controllerCore.getControllerCoreOutput();
 
@@ -301,6 +302,7 @@ public class QuadrupedWalkingControllerState extends HighLevelControllerState im
       onLiftOffTriggered.set(false);
       onTouchDownTriggered.set(false);
 
+      // FIXME this should not be called
       JointDesiredOutputList jointDesiredOutputList = runtimeEnvironment.getJointDesiredOutputList();
       for (int i = 0; i < jointDesiredOutputList.getNumberOfJointsWithDesiredOutput(); i++)
          jointDesiredOutputList.getJointDesiredOutput(i).setControlMode(JointDesiredControlMode.EFFORT);
