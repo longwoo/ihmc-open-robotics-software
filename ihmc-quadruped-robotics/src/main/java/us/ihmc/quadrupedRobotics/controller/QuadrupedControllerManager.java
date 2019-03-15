@@ -130,11 +130,11 @@ public class QuadrupedControllerManager implements RobotController, CloseableAnd
 
       // Initialize output processor
       StateChangeSmootherComponent stateChangeSmootherComponent = new StateChangeSmootherComponent(runtimeEnvironment, yoLowLevelOneDoFJointDesiredDataHolder, registry);
-      JointIntegratorComponent jointIntegrator = new JointIntegratorComponent(yoLowLevelOneDoFJointDesiredDataHolder, runtimeEnvironment.getControlDT(), registry);
+//      JointIntegratorComponent jointIntegrator = new JointIntegratorComponent(yoLowLevelOneDoFJointDesiredDataHolder, runtimeEnvironment.getControlDT(), registry);
       controlManagerFactory.getOrCreateFeetManager().attachStateChangedListener(stateChangeSmootherComponent.createFiniteStateMachineStateChangedListener());
       OutputProcessorBuilder outputProcessorBuilder = new OutputProcessorBuilder(runtimeEnvironment.getFullRobotModel());
       outputProcessorBuilder.addComponent(stateChangeSmootherComponent);
-      outputProcessorBuilder.addComponent(jointIntegrator);
+//      outputProcessorBuilder.addComponent(jointIntegrator);
       outputProcessor = outputProcessorBuilder.build();
 
       requestedControllerState.set(null);
