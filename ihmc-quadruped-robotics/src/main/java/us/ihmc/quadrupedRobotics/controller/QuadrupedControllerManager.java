@@ -47,6 +47,7 @@ import us.ihmc.robotics.stateMachine.factories.StateMachineFactory;
 import us.ihmc.ros2.RealtimeRos2Node;
 import us.ihmc.sensorProcessing.model.RobotMotionStatusHolder;
 import us.ihmc.sensorProcessing.outputData.JointDesiredOutputList;
+import us.ihmc.sensorProcessing.outputData.JointDesiredOutputListBasics;
 import us.ihmc.sensorProcessing.outputData.JointDesiredOutputListReadOnly;
 import us.ihmc.sensorProcessing.outputData.JointDesiredOutputReadOnly;
 import us.ihmc.simulationconstructionset.util.RobotController;
@@ -82,7 +83,7 @@ public class QuadrupedControllerManager implements RobotController, CloseableAnd
 
    private final OutputProcessor outputProcessor;
    private final YoLowLevelOneDoFJointDesiredDataHolder yoLowLevelOneDoFJointDesiredDataHolder;
-   private final JointDesiredOutputList lowLevelControllerOutput;
+   private final JointDesiredOutputListBasics lowLevelControllerOutput;
 
    private final CommandInputManager commandInputManager;
    private final StatusMessageOutputManager statusMessageOutputManager;
@@ -94,7 +95,7 @@ public class QuadrupedControllerManager implements RobotController, CloseableAnd
 
    private StateEstimatorModeSubscriber stateEstimatorModeSubscriber;
 
-   public QuadrupedControllerManager(QuadrupedRuntimeEnvironment runtimeEnvironment, JointDesiredOutputList jointDesiredOutputList,
+   public QuadrupedControllerManager(QuadrupedRuntimeEnvironment runtimeEnvironment, JointDesiredOutputListBasics jointDesiredOutputList,
                                      QuadrupedPhysicalProperties physicalProperties, HighLevelControllerName initialControllerState,
                                      HighLevelControllerState calibrationState)
    {
@@ -276,7 +277,7 @@ public class QuadrupedControllerManager implements RobotController, CloseableAnd
    }
 
    private StateMachine<HighLevelControllerName, HighLevelControllerState> buildStateMachine(QuadrupedRuntimeEnvironment runtimeEnvironment,
-                                                                                             JointDesiredOutputList jointDesiredOutputList,
+                                                                                             JointDesiredOutputListReadOnly jointDesiredOutputList,
                                                                                              HighLevelControllerName initialControllerState,
                                                                                              HighLevelControllerState calibrationState)
    {
