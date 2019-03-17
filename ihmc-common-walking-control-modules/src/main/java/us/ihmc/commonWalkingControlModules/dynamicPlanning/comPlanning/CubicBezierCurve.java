@@ -39,23 +39,27 @@ public class CubicBezierCurve
       this.duration = duration;
    }
 
-
    public static void computeMapToCurveBounds(DenseMatrix64F mapToPack, double duration)
+   {
+      computeMapToCurveBounds(0, 0, mapToPack, duration);
+   }
+
+   public static void computeMapToCurveBounds(int rowStart, int colStart, DenseMatrix64F mapToPack, double duration)
    {
       mapToPack.reshape(4, 4);
       mapToPack.zero();
 
-      mapToPack.set(0, 0, 1.0); // initial position
-      mapToPack.set(1, 0, -3.0); // initial velocity
-      mapToPack.set(1, 1, 3.0);
-      mapToPack.set(2, 0, getFirstCoefficientPositionMultiplier(duration)); // final position
-      mapToPack.set(2, 1, getSecondCoefficientPositionMultiplier(duration)); // final position
-      mapToPack.set(2, 2, getThirdCoefficientPositionMultiplier(duration)); // final position
-      mapToPack.set(2, 3, getFourthCoefficientPositionMultiplier(duration)); // final position
-      mapToPack.set(3, 0, getFirstCoefficientVelocityMultiplier(duration)); // final velocity
-      mapToPack.set(3, 1, getSecondCoefficientVelocityMultiplier(duration)); // final velocity
-      mapToPack.set(3, 2, getThirdCoefficientVelocityMultiplier(duration)); // final velocity
-      mapToPack.set(3, 3, getFourthCoefficientVelocityMultiplier(duration)); // final velocity
+      mapToPack.set(rowStart,     colStart,     1.0); // initial position
+      mapToPack.set(rowStart + 1, colStart,    -3.0); // initial velocity
+      mapToPack.set(rowStart + 1, colStart + 1, 3.0);
+      mapToPack.set(rowStart + 2, colStart,     getFirstCoefficientPositionMultiplier(duration)); // final position
+      mapToPack.set(rowStart + 2, colStart + 1, getSecondCoefficientPositionMultiplier(duration)); // final position
+      mapToPack.set(rowStart + 2, colStart + 2, getThirdCoefficientPositionMultiplier(duration)); // final position
+      mapToPack.set(rowStart + 2, colStart + 3, getFourthCoefficientPositionMultiplier(duration)); // final position
+      mapToPack.set(rowStart + 3, colStart,     getFirstCoefficientVelocityMultiplier(duration)); // final velocity
+      mapToPack.set(rowStart + 3, colStart + 1, getSecondCoefficientVelocityMultiplier(duration)); // final velocity
+      mapToPack.set(rowStart + 3, colStart + 2, getThirdCoefficientVelocityMultiplier(duration)); // final velocity
+      mapToPack.set(rowStart + 3, colStart + 3, getFourthCoefficientVelocityMultiplier(duration)); // final velocity
    }
 
    private static double getFirstCoefficientPositionMultiplier(double time)
