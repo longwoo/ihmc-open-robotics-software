@@ -22,27 +22,11 @@ public class CoMTrajectoryQPInputCalculator
       this.omega = omega;
    }
 
-   public void computeWorkWeightMatrix(List<? extends ContactStateProvider> contactSequence, double weight, DenseMatrix64F matrixToPack)
-   {
-      for (int segmentNumber = 0; segmentNumber < contactSequence.size(); segmentNumber++)
-      {
-         if (!contactSequence.get(segmentNumber).getContactState().isLoadBearing())
-            continue;
-
-         double segmentDuration = contactSequence.get(segmentNumber).getTimeInterval().getDuration();
-         populateWorkWeightTermForSegment(segmentNumber, segmentDuration, omega.getValue(), weight, matrixToPack);
-      }
-   }
-
-   public void computeJacobianToCoMCoefficients(List<? extends ContactStateProvider> contactSequence, DenseMatrix64F coefficientConstraintInv,
-                                                DenseMatrix64F vrpBoundsJacobian, DenseMatrix64F jacobianToPack)
+   public void computeBezierMapMultiplier(List<? extends ContactStateProvider> contactSequence)
    {
       int size = indexHandler.getNumberOfVRPWaypoints();
 
-      tempJ.reshape(indexHandler.getTotalSize(), size);
       bezierMapMultiplier.reshape(size, size);
-
-      tempJ.zero();
       bezierMapMultiplier.zero();
 
       int waypointSetNumber = 0;
@@ -56,9 +40,34 @@ public class CoMTrajectoryQPInputCalculator
 
          waypointSetNumber++;
       }
+   }
+
+   public void computeWorkWeightMatrix(List<? extends ContactStateProvider> contactSequence, double weight, DenseMatrix64F matrixToPack)
+   {
+      for (int segmentNumber = 0; segmentNumber < contactSequence.size(); segmentNumber++)
+      {
+         if (!contactSequence.get(segmentNumber).getContactState().isLoadBearing())
+            continue;
+
+         double segmentDuration = contactSequence.get(segmentNumber).getTimeInterval().getDuration();
+         populateWorkWeightTermForSegment(segmentNumber, segmentDuration, omega.getValue(), weight, matrixToPack);
+      }
+   }
+
+   public void computeJacobianToCoMCoefficients(DenseMatrix64F coefficientConstraintInv, DenseMatrix64F vrpBoundsJacobian, DenseMatrix64F jacobianToPack)
+   {
+      int size = indexHandler.getNumberOfVRPWaypoints();
+
+      tempJ.reshape(indexHandler.getTotalSize(), size);
+      tempJ.zero();
 
       CommonOps.multAdd(vrpBoundsJacobian, bezierMapMultiplier, tempJ);
       CommonOps.mult(coefficientConstraintInv, tempJ, jacobianToPack);
+   }
+
+   public void computeJacobianToVRPBounds(DenseMatrix64F jacobianToPack)
+   {
+      jacobianToPack.set(bezierMapMultiplier);
    }
 
    static void populateWorkWeightTermForSegment(int segmentNumber, double segmentDuration, double omega, double costWeight, DenseMatrix64F matrixToPack)

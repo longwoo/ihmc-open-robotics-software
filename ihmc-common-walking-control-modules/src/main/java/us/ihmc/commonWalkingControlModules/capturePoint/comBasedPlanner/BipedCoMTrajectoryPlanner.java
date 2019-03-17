@@ -1,5 +1,6 @@
 package us.ihmc.commonWalkingControlModules.capturePoint.comBasedPlanner;
 
+import us.ihmc.commonWalkingControlModules.dynamicPlanning.comPlanning.CoMTrajectoryOptimizationPlanner;
 import us.ihmc.commonWalkingControlModules.dynamicPlanning.comPlanning.CoMTrajectoryPlanner;
 import us.ihmc.commonWalkingControlModules.dynamicPlanning.comPlanning.ContactStateProvider;
 import us.ihmc.euclid.referenceFrame.interfaces.FramePoint3DReadOnly;
@@ -29,7 +30,7 @@ public class BipedCoMTrajectoryPlanner
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
 
    private final BipedContactSequenceUpdater sequenceUpdater;
-   private final CoMTrajectoryPlanner comTrajectoryPlanner;
+   private final CoMTrajectoryOptimizationPlanner comTrajectoryPlanner;
 
    private final YoDouble timeInContactPhase = new YoDouble("timeInContactPhase", registry);
 
@@ -39,7 +40,7 @@ public class BipedCoMTrajectoryPlanner
                                     YoVariableRegistry parentRegistry, YoGraphicsListRegistry yoGraphicsListRegistry)
    {
       sequenceUpdater = new BipedContactSequenceUpdater(soleFrames, registry, yoGraphicsListRegistry);
-      comTrajectoryPlanner = new CoMTrajectoryPlanner(omega, gravityZ, nominalCoMHeight, registry, yoGraphicsListRegistry);
+      comTrajectoryPlanner = new CoMTrajectoryOptimizationPlanner(omega, gravityZ, nominalCoMHeight, registry, yoGraphicsListRegistry);
 
       parentRegistry.addChild(registry);
    }

@@ -56,7 +56,6 @@ public class CoMTrajectoryPlanner implements CoMTrajectoryPlannerInterface
    private static final boolean VISUALIZE = true;
    private static final double POINT_SIZE = 0.005;
 
-   private static final double sufficientlyLarge = 1.0e10;
 
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
 
@@ -395,12 +394,15 @@ public class CoMTrajectoryPlanner implements CoMTrajectoryPlannerInterface
 
       double omega = this.omega.getValue();
 
-      constructDesiredCoMPosition(comPositionToPack, firstCoefficient, secondCoefficient, thirdCoefficient, fourthCoefficient, fifthCoefficient,
-                                  sixthCoefficient, timeInPhase, omega);
-      constructDesiredCoMVelocity(comVelocityToPack, firstCoefficient, secondCoefficient, thirdCoefficient, fourthCoefficient, fifthCoefficient,
-                                  sixthCoefficient, timeInPhase, omega);
-      constructDesiredCoMAcceleration(comAccelerationToPack, firstCoefficient, secondCoefficient, thirdCoefficient, fourthCoefficient, fifthCoefficient,
-                                      sixthCoefficient, timeInPhase, omega);
+      CoMTrajectoryPlannerTools
+            .constructDesiredCoMPosition(comPositionToPack, firstCoefficient, secondCoefficient, thirdCoefficient, fourthCoefficient, fifthCoefficient,
+                                         sixthCoefficient, timeInPhase, omega);
+      CoMTrajectoryPlannerTools
+            .constructDesiredCoMVelocity(comVelocityToPack, firstCoefficient, secondCoefficient, thirdCoefficient, fourthCoefficient, fifthCoefficient,
+                                         sixthCoefficient, timeInPhase, omega);
+      CoMTrajectoryPlannerTools
+            .constructDesiredCoMAcceleration(comAccelerationToPack, firstCoefficient, secondCoefficient, thirdCoefficient, fourthCoefficient, fifthCoefficient,
+                                             sixthCoefficient, timeInPhase, omega);
 
       computeDesiredCapturePointPosition(comPositionToPack, comVelocityToPack, omega, dcmPositionToPack);
       computeDesiredCapturePointVelocity(comVelocityToPack, comAccelerationToPack, omega, dcmVelocityToPack);
@@ -525,12 +527,12 @@ public class CoMTrajectoryPlanner implements CoMTrajectoryPlannerInterface
       centerOfMassLocationForConstraint.checkReferenceFrameMatch(ReferenceFrame.getWorldFrame());
       double omega = this.omega.getValue();
 
-      coefficientMultipliers.set(numberOfConstraints, 0, getCoMPositionFirstCoefficient(omega, 0.0));
-      coefficientMultipliers.set(numberOfConstraints, 1, getCoMPositionSecondCoefficient(omega, 0.0));
-      coefficientMultipliers.set(numberOfConstraints, 2, getCoMPositionThirdCoefficient(0.0));
-      coefficientMultipliers.set(numberOfConstraints, 3, getCoMPositionFourthCoefficient(0.0));
-      coefficientMultipliers.set(numberOfConstraints, 4, getCoMPositionFifthCoefficient(0.0));
-      coefficientMultipliers.set(numberOfConstraints, 5, getCoMPositionSixthCoefficient());
+      coefficientMultipliers.set(numberOfConstraints, 0, CoMTrajectoryPlannerTools.getCoMPositionFirstCoefficient(omega, 0.0));
+      coefficientMultipliers.set(numberOfConstraints, 1, CoMTrajectoryPlannerTools.getCoMPositionSecondCoefficient(omega, 0.0));
+      coefficientMultipliers.set(numberOfConstraints, 2, CoMTrajectoryPlannerTools.getCoMPositionThirdCoefficient(0.0));
+      coefficientMultipliers.set(numberOfConstraints, 3, CoMTrajectoryPlannerTools.getCoMPositionFourthCoefficient(0.0));
+      coefficientMultipliers.set(numberOfConstraints, 4, CoMTrajectoryPlannerTools.getCoMPositionFifthCoefficient(0.0));
+      coefficientMultipliers.set(numberOfConstraints, 5, CoMTrajectoryPlannerTools.getCoMPositionSixthCoefficient());
 
       xConstants.add(numberOfConstraints, 0, centerOfMassLocationForConstraint.getX());
       yConstants.add(numberOfConstraints, 0, centerOfMassLocationForConstraint.getY());
@@ -571,12 +573,12 @@ public class CoMTrajectoryPlanner implements CoMTrajectoryPlannerInterface
       int startIndex = indexHandler.getContactSequenceStartIndex(sequenceId);
 
       // add constraints on terminal DCM position
-      coefficientMultipliers.set(numberOfConstraints, startIndex + 0, getDCMPositionFirstCoefficient(omega, time));
-      coefficientMultipliers.set(numberOfConstraints, startIndex + 1, getDCMPositionSecondCoefficient());
-      coefficientMultipliers.set(numberOfConstraints, startIndex + 2, getDCMPositionThirdCoefficient(omega, time));
-      coefficientMultipliers.set(numberOfConstraints, startIndex + 3, getDCMPositionFourthCoefficient(omega, time));
-      coefficientMultipliers.set(numberOfConstraints, startIndex + 4, getDCMPositionFifthCoefficient(omega, time));
-      coefficientMultipliers.set(numberOfConstraints, startIndex + 5, getDCMPositionSixthCoefficient());
+      coefficientMultipliers.set(numberOfConstraints, startIndex + 0, CoMTrajectoryPlannerTools.getDCMPositionFirstCoefficient(omega, time));
+      coefficientMultipliers.set(numberOfConstraints, startIndex + 1, CoMTrajectoryPlannerTools.getDCMPositionSecondCoefficient());
+      coefficientMultipliers.set(numberOfConstraints, startIndex + 2, CoMTrajectoryPlannerTools.getDCMPositionThirdCoefficient(omega, time));
+      coefficientMultipliers.set(numberOfConstraints, startIndex + 3, CoMTrajectoryPlannerTools.getDCMPositionFourthCoefficient(omega, time));
+      coefficientMultipliers.set(numberOfConstraints, startIndex + 4, CoMTrajectoryPlannerTools.getDCMPositionFifthCoefficient(omega, time));
+      coefficientMultipliers.set(numberOfConstraints, startIndex + 5, CoMTrajectoryPlannerTools.getDCMPositionSixthCoefficient());
 
       xConstants.add(numberOfConstraints, 0, desiredDCMPosition.getX());
       yConstants.add(numberOfConstraints, 0, desiredDCMPosition.getY());
@@ -611,18 +613,18 @@ public class CoMTrajectoryPlanner implements CoMTrajectoryPlannerInterface
       int previousStartIndex = indexHandler.getContactSequenceStartIndex(previousSequence);
       int nextStartIndex = indexHandler.getContactSequenceStartIndex(nextSequence);
 
-      coefficientMultipliers.set(numberOfConstraints, previousStartIndex + 0, getCoMPositionFirstCoefficient(omega, previousDuration));
-      coefficientMultipliers.set(numberOfConstraints, previousStartIndex + 1, getCoMPositionSecondCoefficient(omega, previousDuration));
-      coefficientMultipliers.set(numberOfConstraints, previousStartIndex + 2, getCoMPositionThirdCoefficient(previousDuration));
-      coefficientMultipliers.set(numberOfConstraints, previousStartIndex + 3, getCoMPositionFourthCoefficient(previousDuration));
-      coefficientMultipliers.set(numberOfConstraints, previousStartIndex + 4, getCoMPositionFifthCoefficient(previousDuration));
-      coefficientMultipliers.set(numberOfConstraints, previousStartIndex + 5, getCoMPositionSixthCoefficient());
-      coefficientMultipliers.set(numberOfConstraints, nextStartIndex + 0, -getCoMPositionFirstCoefficient(omega, 0.0));
-      coefficientMultipliers.set(numberOfConstraints, nextStartIndex + 1, -getCoMPositionSecondCoefficient(omega, 0.0));
-      coefficientMultipliers.set(numberOfConstraints, nextStartIndex + 2, -getCoMPositionThirdCoefficient(0.0));
-      coefficientMultipliers.set(numberOfConstraints, nextStartIndex + 3, -getCoMPositionFourthCoefficient(0.0));
-      coefficientMultipliers.set(numberOfConstraints, nextStartIndex + 4, -getCoMPositionFifthCoefficient(0.0));
-      coefficientMultipliers.set(numberOfConstraints, nextStartIndex + 5, -getCoMPositionSixthCoefficient());
+      coefficientMultipliers.set(numberOfConstraints, previousStartIndex + 0, CoMTrajectoryPlannerTools.getCoMPositionFirstCoefficient(omega, previousDuration));
+      coefficientMultipliers.set(numberOfConstraints, previousStartIndex + 1, CoMTrajectoryPlannerTools.getCoMPositionSecondCoefficient(omega, previousDuration));
+      coefficientMultipliers.set(numberOfConstraints, previousStartIndex + 2, CoMTrajectoryPlannerTools.getCoMPositionThirdCoefficient(previousDuration));
+      coefficientMultipliers.set(numberOfConstraints, previousStartIndex + 3, CoMTrajectoryPlannerTools.getCoMPositionFourthCoefficient(previousDuration));
+      coefficientMultipliers.set(numberOfConstraints, previousStartIndex + 4, CoMTrajectoryPlannerTools.getCoMPositionFifthCoefficient(previousDuration));
+      coefficientMultipliers.set(numberOfConstraints, previousStartIndex + 5, CoMTrajectoryPlannerTools.getCoMPositionSixthCoefficient());
+      coefficientMultipliers.set(numberOfConstraints, nextStartIndex + 0, -CoMTrajectoryPlannerTools.getCoMPositionFirstCoefficient(omega, 0.0));
+      coefficientMultipliers.set(numberOfConstraints, nextStartIndex + 1, -CoMTrajectoryPlannerTools.getCoMPositionSecondCoefficient(omega, 0.0));
+      coefficientMultipliers.set(numberOfConstraints, nextStartIndex + 2, -CoMTrajectoryPlannerTools.getCoMPositionThirdCoefficient(0.0));
+      coefficientMultipliers.set(numberOfConstraints, nextStartIndex + 3, -CoMTrajectoryPlannerTools.getCoMPositionFourthCoefficient(0.0));
+      coefficientMultipliers.set(numberOfConstraints, nextStartIndex + 4, -CoMTrajectoryPlannerTools.getCoMPositionFifthCoefficient(0.0));
+      coefficientMultipliers.set(numberOfConstraints, nextStartIndex + 5, -CoMTrajectoryPlannerTools.getCoMPositionSixthCoefficient());
 
       numberOfConstraints++;
    }
@@ -653,18 +655,18 @@ public class CoMTrajectoryPlanner implements CoMTrajectoryPlannerInterface
       int previousStartIndex = indexHandler.getContactSequenceStartIndex(previousSequence);
       int nextStartIndex = indexHandler.getContactSequenceStartIndex(nextSequence);
 
-      coefficientMultipliers.set(numberOfConstraints, previousStartIndex + 0, getCoMVelocityFirstCoefficient(omega, previousDuration));
-      coefficientMultipliers.set(numberOfConstraints, previousStartIndex + 1, getCoMVelocitySecondCoefficient(omega, previousDuration));
-      coefficientMultipliers.set(numberOfConstraints, previousStartIndex + 2, getCoMVelocityThirdCoefficient(previousDuration));
-      coefficientMultipliers.set(numberOfConstraints, previousStartIndex + 3, getCoMVelocityFourthCoefficient(previousDuration));
-      coefficientMultipliers.set(numberOfConstraints, previousStartIndex + 4, getCoMVelocityFifthCoefficient());
-      coefficientMultipliers.set(numberOfConstraints, previousStartIndex + 5, getCoMVelocitySixthCoefficient());
-      coefficientMultipliers.set(numberOfConstraints, nextStartIndex + 0, -getCoMVelocityFirstCoefficient(omega, 0.0));
-      coefficientMultipliers.set(numberOfConstraints, nextStartIndex + 1, -getCoMVelocitySecondCoefficient(omega, 0.0));
-      coefficientMultipliers.set(numberOfConstraints, nextStartIndex + 2, -getCoMVelocityThirdCoefficient(0.0));
-      coefficientMultipliers.set(numberOfConstraints, nextStartIndex + 3, -getCoMVelocityFourthCoefficient(0.0));
-      coefficientMultipliers.set(numberOfConstraints, nextStartIndex + 4, -getCoMVelocityFifthCoefficient());
-      coefficientMultipliers.set(numberOfConstraints, nextStartIndex + 5, -getCoMVelocitySixthCoefficient());
+      coefficientMultipliers.set(numberOfConstraints, previousStartIndex + 0, CoMTrajectoryPlannerTools.getCoMVelocityFirstCoefficient(omega, previousDuration));
+      coefficientMultipliers.set(numberOfConstraints, previousStartIndex + 1, CoMTrajectoryPlannerTools.getCoMVelocitySecondCoefficient(omega, previousDuration));
+      coefficientMultipliers.set(numberOfConstraints, previousStartIndex + 2, CoMTrajectoryPlannerTools.getCoMVelocityThirdCoefficient(previousDuration));
+      coefficientMultipliers.set(numberOfConstraints, previousStartIndex + 3, CoMTrajectoryPlannerTools.getCoMVelocityFourthCoefficient(previousDuration));
+      coefficientMultipliers.set(numberOfConstraints, previousStartIndex + 4, CoMTrajectoryPlannerTools.getCoMVelocityFifthCoefficient());
+      coefficientMultipliers.set(numberOfConstraints, previousStartIndex + 5, CoMTrajectoryPlannerTools.getCoMVelocitySixthCoefficient());
+      coefficientMultipliers.set(numberOfConstraints, nextStartIndex + 0, -CoMTrajectoryPlannerTools.getCoMVelocityFirstCoefficient(omega, 0.0));
+      coefficientMultipliers.set(numberOfConstraints, nextStartIndex + 1, -CoMTrajectoryPlannerTools.getCoMVelocitySecondCoefficient(omega, 0.0));
+      coefficientMultipliers.set(numberOfConstraints, nextStartIndex + 2, -CoMTrajectoryPlannerTools.getCoMVelocityThirdCoefficient(0.0));
+      coefficientMultipliers.set(numberOfConstraints, nextStartIndex + 3, -CoMTrajectoryPlannerTools.getCoMVelocityFourthCoefficient(0.0));
+      coefficientMultipliers.set(numberOfConstraints, nextStartIndex + 4, -CoMTrajectoryPlannerTools.getCoMVelocityFifthCoefficient());
+      coefficientMultipliers.set(numberOfConstraints, nextStartIndex + 5, -CoMTrajectoryPlannerTools.getCoMVelocitySixthCoefficient());
 
       numberOfConstraints++;
    }
@@ -742,12 +744,12 @@ public class CoMTrajectoryPlanner implements CoMTrajectoryPlannerInterface
 
       desiredVRPPosition.checkReferenceFrameMatch(worldFrame);
 
-      coefficientMultipliers.set(numberOfConstraints, startIndex + 0, getVRPPositionFirstCoefficient());
-      coefficientMultipliers.set(numberOfConstraints, startIndex + 1, getVRPPositionSecondCoefficient());
-      coefficientMultipliers.set(numberOfConstraints, startIndex + 2, getVRPPositionThirdCoefficient(omega, time));
-      coefficientMultipliers.set(numberOfConstraints, startIndex + 3, getVRPPositionFourthCoefficient(omega, time));
-      coefficientMultipliers.set(numberOfConstraints, startIndex + 4, getVRPPositionFifthCoefficient(time));
-      coefficientMultipliers.set(numberOfConstraints, startIndex + 5, getVRPPositionSixthCoefficient());
+      coefficientMultipliers.set(numberOfConstraints, startIndex + 0, CoMTrajectoryPlannerTools.getVRPPositionFirstCoefficient());
+      coefficientMultipliers.set(numberOfConstraints, startIndex + 1, CoMTrajectoryPlannerTools.getVRPPositionSecondCoefficient());
+      coefficientMultipliers.set(numberOfConstraints, startIndex + 2, CoMTrajectoryPlannerTools.getVRPPositionThirdCoefficient(omega, time));
+      coefficientMultipliers.set(numberOfConstraints, startIndex + 3, CoMTrajectoryPlannerTools.getVRPPositionFourthCoefficient(omega, time));
+      coefficientMultipliers.set(numberOfConstraints, startIndex + 4, CoMTrajectoryPlannerTools.getVRPPositionFifthCoefficient(time));
+      coefficientMultipliers.set(numberOfConstraints, startIndex + 5, CoMTrajectoryPlannerTools.getVRPPositionSixthCoefficient());
 
       vrpWaypointJacobian.set(numberOfConstraints, vrpWaypointPositionIndex, 1.0);
 
@@ -780,12 +782,12 @@ public class CoMTrajectoryPlanner implements CoMTrajectoryPlannerInterface
 
       desiredVRPVelocity.checkReferenceFrameMatch(worldFrame);
 
-      coefficientMultipliers.set(numberOfConstraints, startIndex + 0, getVRPVelocityFirstCoefficient());
-      coefficientMultipliers.set(numberOfConstraints, startIndex + 1, getVRPVelocitySecondCoefficient());
-      coefficientMultipliers.set(numberOfConstraints, startIndex + 2, getVRPVelocityThirdCoefficient(omega, time));
-      coefficientMultipliers.set(numberOfConstraints, startIndex + 3, getVRPVelocityFourthCoefficient(time));
-      coefficientMultipliers.set(numberOfConstraints, startIndex + 4, getVRPVelocityFifthCoefficient());
-      coefficientMultipliers.set(numberOfConstraints, startIndex + 5, getVRPVelocitySixthCoefficient());
+      coefficientMultipliers.set(numberOfConstraints, startIndex + 0, CoMTrajectoryPlannerTools.getVRPVelocityFirstCoefficient());
+      coefficientMultipliers.set(numberOfConstraints, startIndex + 1, CoMTrajectoryPlannerTools.getVRPVelocitySecondCoefficient());
+      coefficientMultipliers.set(numberOfConstraints, startIndex + 2, CoMTrajectoryPlannerTools.getVRPVelocityThirdCoefficient(omega, time));
+      coefficientMultipliers.set(numberOfConstraints, startIndex + 3, CoMTrajectoryPlannerTools.getVRPVelocityFourthCoefficient(time));
+      coefficientMultipliers.set(numberOfConstraints, startIndex + 4, CoMTrajectoryPlannerTools.getVRPVelocityFifthCoefficient());
+      coefficientMultipliers.set(numberOfConstraints, startIndex + 5, CoMTrajectoryPlannerTools.getVRPVelocitySixthCoefficient());
 
       vrpWaypointJacobian.set(numberOfConstraints, vrpWaypointVelocityIndex, 1.0);
 
@@ -813,12 +815,12 @@ public class CoMTrajectoryPlanner implements CoMTrajectoryPlannerInterface
 
       int startIndex = indexHandler.getContactSequenceStartIndex(sequenceId);
 
-      coefficientMultipliers.set(numberOfConstraints, startIndex + 0, getCoMAccelerationFirstCoefficient(omega, time));
-      coefficientMultipliers.set(numberOfConstraints, startIndex + 1, getCoMAccelerationSecondCoefficient(omega, time));
-      coefficientMultipliers.set(numberOfConstraints, startIndex + 2, getCoMAccelerationThirdCoefficient(time));
-      coefficientMultipliers.set(numberOfConstraints, startIndex + 3, getCoMAccelerationFourthCoefficient());
-      coefficientMultipliers.set(numberOfConstraints, startIndex + 4, getCoMAccelerationFifthCoefficient());
-      coefficientMultipliers.set(numberOfConstraints, startIndex + 5, getCoMAccelerationSixthCoefficient());
+      coefficientMultipliers.set(numberOfConstraints, startIndex + 0, CoMTrajectoryPlannerTools.getCoMAccelerationFirstCoefficient(omega, time));
+      coefficientMultipliers.set(numberOfConstraints, startIndex + 1, CoMTrajectoryPlannerTools.getCoMAccelerationSecondCoefficient(omega, time));
+      coefficientMultipliers.set(numberOfConstraints, startIndex + 2, CoMTrajectoryPlannerTools.getCoMAccelerationThirdCoefficient(time));
+      coefficientMultipliers.set(numberOfConstraints, startIndex + 3, CoMTrajectoryPlannerTools.getCoMAccelerationFourthCoefficient());
+      coefficientMultipliers.set(numberOfConstraints, startIndex + 4, CoMTrajectoryPlannerTools.getCoMAccelerationFifthCoefficient());
+      coefficientMultipliers.set(numberOfConstraints, startIndex + 5, CoMTrajectoryPlannerTools.getCoMAccelerationSixthCoefficient());
 
       zConstants.set(numberOfConstraints, 0, -Math.abs(gravityZ));
 
@@ -842,394 +844,14 @@ public class CoMTrajectoryPlanner implements CoMTrajectoryPlannerInterface
 
       int startIndex = indexHandler.getContactSequenceStartIndex(sequenceId);
 
-      coefficientMultipliers.set(numberOfConstraints, startIndex + 0, getCoMJerkFirstCoefficient(omega, time));
-      coefficientMultipliers.set(numberOfConstraints, startIndex + 1, getCoMJerkSecondCoefficient(omega, time));
-      coefficientMultipliers.set(numberOfConstraints, startIndex + 2, getCoMJerkThirdCoefficient());
-      coefficientMultipliers.set(numberOfConstraints, startIndex + 3, getCoMJerkFourthCoefficient());
-      coefficientMultipliers.set(numberOfConstraints, startIndex + 4, getCoMJerkFifthCoefficient());
-      coefficientMultipliers.set(numberOfConstraints, startIndex + 5, getCoMJerkSixthCoefficient());
+      coefficientMultipliers.set(numberOfConstraints, startIndex + 0, CoMTrajectoryPlannerTools.getCoMJerkFirstCoefficient(omega, time));
+      coefficientMultipliers.set(numberOfConstraints, startIndex + 1, CoMTrajectoryPlannerTools.getCoMJerkSecondCoefficient(omega, time));
+      coefficientMultipliers.set(numberOfConstraints, startIndex + 2, CoMTrajectoryPlannerTools.getCoMJerkThirdCoefficient());
+      coefficientMultipliers.set(numberOfConstraints, startIndex + 3, CoMTrajectoryPlannerTools.getCoMJerkFourthCoefficient());
+      coefficientMultipliers.set(numberOfConstraints, startIndex + 4, CoMTrajectoryPlannerTools.getCoMJerkFifthCoefficient());
+      coefficientMultipliers.set(numberOfConstraints, startIndex + 5, CoMTrajectoryPlannerTools.getCoMJerkSixthCoefficient());
 
       numberOfConstraints++;
    }
 
-   /**
-    * e<sup>&omega; t</sup>
-    */
-   static double getCoMPositionFirstCoefficient(double omega, double time)
-   {
-      return Math.min(sufficientlyLarge, Math.exp(omega * time));
-   }
-
-   /**
-    * e<sup>-&omega; t</sup>
-    */
-   static double getCoMPositionSecondCoefficient(double omega, double time)
-   {
-      return Math.exp(-omega * time);
-   }
-
-   /**
-    * t<sup>3</sup>
-    */
-   static double getCoMPositionThirdCoefficient(double time)
-   {
-      return Math.min(sufficientlyLarge, time * time * time);
-   }
-
-   /**
-    * t<sup>2</sup>
-    */
-   static double getCoMPositionFourthCoefficient(double time)
-   {
-      return Math.min(sufficientlyLarge, time * time);
-   }
-
-   /**
-    * t
-    */
-   static double getCoMPositionFifthCoefficient(double time)
-   {
-      return Math.min(sufficientlyLarge, time);
-   }
-
-   /**
-    * 1.0
-    */
-   static double getCoMPositionSixthCoefficient()
-   {
-      return 1.0;
-   }
-
-   /**
-    * &omega; e<sup>&omega; t</sup>
-    */
-   static double getCoMVelocityFirstCoefficient(double omega, double time)
-   {
-      return omega * Math.min(sufficientlyLarge, Math.exp(omega * time));
-   }
-
-   /**
-    * -&omega; e<sup>-&omega; t</sup>
-    */
-   static double getCoMVelocitySecondCoefficient(double omega, double time)
-   {
-      return -omega * Math.exp(-omega * time);
-   }
-
-   /**
-    * 3 t<sup>2</sup>
-    */
-   static double getCoMVelocityThirdCoefficient(double time)
-   {
-      return 3.0 * Math.min(sufficientlyLarge, time * time);
-   }
-
-   /**
-    * 2 t
-    */
-   static double getCoMVelocityFourthCoefficient(double time)
-   {
-      return 2.0 * Math.min(sufficientlyLarge, time);
-   }
-
-   /**
-    * 1.0
-    */
-   static double getCoMVelocityFifthCoefficient()
-   {
-      return 1.0;
-   }
-
-   /**
-    * 0.0
-    */
-   static double getCoMVelocitySixthCoefficient()
-   {
-      return 0.0;
-   }
-
-   /**
-    * &omega;<sup>2</sup> e<sup>&omega; t</sup>
-    */
-   static double getCoMAccelerationFirstCoefficient(double omega, double time)
-   {
-      return omega * omega * Math.min(sufficientlyLarge, Math.exp(omega * time));
-   }
-
-   /**
-    * &omega;<sup>2</sup> e<sup>-&omega; t</sup>
-    */
-   static double getCoMAccelerationSecondCoefficient(double omega, double time)
-   {
-      return omega * omega * Math.exp(-omega * time);
-   }
-
-   /**
-    * 6 t
-    */
-   static double getCoMAccelerationThirdCoefficient(double time)
-   {
-      return 6.0 * Math.min(sufficientlyLarge, time);
-   }
-
-   /**
-    * 2
-    */
-   static double getCoMAccelerationFourthCoefficient()
-   {
-      return 2.0;
-   }
-
-   /**
-    * 0.0
-    */
-   static double getCoMAccelerationFifthCoefficient()
-   {
-      return 0.0;
-   }
-
-   /**
-    * 0.0
-    */
-   static double getCoMAccelerationSixthCoefficient()
-   {
-      return 0.0;
-   }
-
-   /**
-    * &omega;<sup>3</sup> e<sup>&omega; t</sup>
-    */
-   static double getCoMJerkFirstCoefficient(double omega, double time)
-   {
-      return omega * omega * omega * Math.min(sufficientlyLarge, Math.exp(omega * time));
-   }
-
-   /**
-    * -&omega;<sup>3</sup> e<sup>-&omega; t</sup>
-    */
-   static double getCoMJerkSecondCoefficient(double omega, double time)
-   {
-      return -omega * omega * omega * Math.exp(-omega * time);
-   }
-
-   /**
-    * 6.0
-    */
-   static double getCoMJerkThirdCoefficient()
-   {
-      return 6.0;
-   }
-
-   /**
-    * 0.0
-    */
-   static double getCoMJerkFourthCoefficient()
-   {
-      return 0.0;
-   }
-
-   /**
-    * 0.0
-    */
-   static double getCoMJerkFifthCoefficient()
-   {
-      return 0.0;
-   }
-
-   /**
-    * 0.0
-    */
-   static double getCoMJerkSixthCoefficient()
-   {
-      return 0.0;
-   }
-
-   /**
-    * 2 e<sup>&omega; t</sup>
-    */
-   static double getDCMPositionFirstCoefficient(double omega, double time)
-   {
-      return 2.0 * Math.min(sufficientlyLarge, Math.exp(omega * time));
-   }
-
-   /**
-    * 0.0
-    */
-   static double getDCMPositionSecondCoefficient()
-   {
-      return 0.0;
-   }
-
-   /**
-    * t<sup>3</sup> + 3.0 / &omega; t<sup>2</sup>
-    */
-   static double getDCMPositionThirdCoefficient(double omega, double time)
-   {
-      return Math.min(sufficientlyLarge, time * time * time) + 3.0 / omega * Math.min(sufficientlyLarge, time * time);
-   }
-
-   /**
-    * t<sup>2</sup> + 2.0 / &omega; t
-    */
-   static double getDCMPositionFourthCoefficient(double omega, double time)
-   {
-      return Math.min(sufficientlyLarge, time * time) + 2.0 / omega * Math.min(sufficientlyLarge, time);
-   }
-
-   /**
-    * t + 1/ &omega;
-    */
-   static double getDCMPositionFifthCoefficient(double omega, double time)
-   {
-      return Math.min(sufficientlyLarge, time) + 1.0 / omega;
-   }
-
-   /**
-    * 1.0
-    */
-   static double getDCMPositionSixthCoefficient()
-   {
-      return 1.0;
-   }
-
-   /**
-    * 0.0
-    */
-   static double getVRPPositionFirstCoefficient()
-   {
-      return 0.0;
-   }
-
-   /**
-    * 0.0
-    */
-   static double getVRPPositionSecondCoefficient()
-   {
-      return 0.0;
-   }
-
-   /**
-    * t<sup>3</sup> - 6.0 t / &omega;<sup>2</sup>
-    */
-   static double getVRPPositionThirdCoefficient(double omega, double time)
-   {
-      return Math.min(sufficientlyLarge, time * time * time) - 6.0 * Math.min(sufficientlyLarge, time) / (omega * omega);
-   }
-
-   /**
-    * t<sup>2</sup> - 2.0 / &omega;<sup>2</sup>
-    */
-   static double getVRPPositionFourthCoefficient(double omega, double time)
-   {
-      return Math.min(sufficientlyLarge, time * time) - 2.0 / (omega * omega);
-   }
-
-   /**
-    * t
-    */
-   static double getVRPPositionFifthCoefficient(double time)
-   {
-      return Math.min(sufficientlyLarge, time);
-   }
-
-   /**
-    * 1.0
-    */
-   static double getVRPPositionSixthCoefficient()
-   {
-      return 1.0;
-   }
-
-   /**
-    * 0.0
-    */
-   static double getVRPVelocityFirstCoefficient()
-   {
-      return 0.0;
-   }
-
-   /**
-    * 0.0
-    */
-   static double getVRPVelocitySecondCoefficient()
-   {
-      return 0.0;
-   }
-
-   /**
-    * 3 t<sup>2</sup> - 6 / &omega;<sup>2</sup>
-    */
-   static double getVRPVelocityThirdCoefficient(double omega, double time)
-   {
-      return 3.0 * Math.min(sufficientlyLarge, time * time) - 6.0 / (omega * omega);
-   }
-
-   /**
-    * 2 t
-    */
-   static double getVRPVelocityFourthCoefficient(double time)
-   {
-      return 2.0 * Math.min(sufficientlyLarge, time);
-   }
-
-   /**
-    * 1.0
-    */
-   static double getVRPVelocityFifthCoefficient()
-   {
-      return 1.0;
-   }
-
-   /**
-    * 0.0
-    */
-   static double getVRPVelocitySixthCoefficient()
-   {
-      return 0.0;
-   }
-
-   static void constructDesiredCoMPosition(FixedFramePoint3DBasics comPositionToPack, FramePoint3DReadOnly firstCoefficient,
-                                           FramePoint3DReadOnly secondCoefficient, FramePoint3DReadOnly thirdCoefficient,
-                                           FramePoint3DReadOnly fourthCoefficient, FramePoint3DReadOnly fifthCoefficient, FramePoint3DReadOnly sixthCoefficient,
-                                           double timeInPhase, double omega)
-   {
-      comPositionToPack.checkReferenceFrameMatch(worldFrame);
-      comPositionToPack.setToZero();
-      comPositionToPack.scaleAdd(getCoMPositionFirstCoefficient(omega, timeInPhase), firstCoefficient, comPositionToPack);
-      comPositionToPack.scaleAdd(getCoMPositionSecondCoefficient(omega, timeInPhase), secondCoefficient, comPositionToPack);
-      comPositionToPack.scaleAdd(getCoMPositionThirdCoefficient(timeInPhase), thirdCoefficient, comPositionToPack);
-      comPositionToPack.scaleAdd(getCoMPositionFourthCoefficient(timeInPhase), fourthCoefficient, comPositionToPack);
-      comPositionToPack.scaleAdd(getCoMPositionFifthCoefficient(timeInPhase), fifthCoefficient, comPositionToPack);
-      comPositionToPack.scaleAdd(getCoMPositionSixthCoefficient(), sixthCoefficient, comPositionToPack);
-   }
-
-   static void constructDesiredCoMVelocity(FixedFrameVector3DBasics comVelocityToPack, FramePoint3DReadOnly firstCoefficient,
-                                           FramePoint3DReadOnly secondCoefficient, FramePoint3DReadOnly thirdCoefficient,
-                                           FramePoint3DReadOnly fourthCoefficient, FramePoint3DReadOnly fifthCoefficient, FramePoint3DReadOnly sixthCoefficient,
-                                           double timeInPhase, double omega)
-   {
-      comVelocityToPack.checkReferenceFrameMatch(worldFrame);
-      comVelocityToPack.setToZero();
-      comVelocityToPack.scaleAdd(getCoMVelocityFirstCoefficient(omega, timeInPhase), firstCoefficient, comVelocityToPack);
-      comVelocityToPack.scaleAdd(getCoMVelocitySecondCoefficient(omega, timeInPhase), secondCoefficient, comVelocityToPack);
-      comVelocityToPack.scaleAdd(getCoMVelocityThirdCoefficient(timeInPhase), thirdCoefficient, comVelocityToPack);
-      comVelocityToPack.scaleAdd(getCoMVelocityFourthCoefficient(timeInPhase), fourthCoefficient, comVelocityToPack);
-      comVelocityToPack.scaleAdd(getCoMVelocityFifthCoefficient(), fifthCoefficient, comVelocityToPack);
-      comVelocityToPack.scaleAdd(getCoMVelocitySixthCoefficient(), sixthCoefficient, comVelocityToPack);
-   }
-
-   static void constructDesiredCoMAcceleration(FixedFrameVector3DBasics comAccelerationToPack, FramePoint3DReadOnly firstCoefficient,
-                                               FramePoint3DReadOnly secondCoefficient, FramePoint3DReadOnly thirdCoefficient,
-                                               FramePoint3DReadOnly fourthCoefficient, FramePoint3DReadOnly fifthCoefficient,
-                                               FramePoint3DReadOnly sixthCoefficient, double timeInPhase, double omega)
-   {
-      comAccelerationToPack.checkReferenceFrameMatch(worldFrame);
-      comAccelerationToPack.setToZero();
-      comAccelerationToPack.scaleAdd(getCoMAccelerationFirstCoefficient(omega, timeInPhase), firstCoefficient, comAccelerationToPack);
-      comAccelerationToPack.scaleAdd(getCoMAccelerationSecondCoefficient(omega, timeInPhase), secondCoefficient, comAccelerationToPack);
-      comAccelerationToPack.scaleAdd(getCoMAccelerationThirdCoefficient(timeInPhase), thirdCoefficient, comAccelerationToPack);
-      comAccelerationToPack.scaleAdd(getCoMAccelerationFourthCoefficient(), fourthCoefficient, comAccelerationToPack);
-      comAccelerationToPack.scaleAdd(getCoMAccelerationFifthCoefficient(), fifthCoefficient, comAccelerationToPack);
-      comAccelerationToPack.scaleAdd(getCoMAccelerationSixthCoefficient(), sixthCoefficient, comAccelerationToPack);
-   }
 }
