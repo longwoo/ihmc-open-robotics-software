@@ -14,17 +14,15 @@ import us.ihmc.yoVariables.variable.YoInteger;
 
 public class CoMTrajectoryQPSolver
 {
-   private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
-
    private final CoMTrajectoryPlannerIndexHandler indexHandler;
    private final DoubleProvider omega;
 
-   private final ExecutionTimer qpSolverTimer = new ExecutionTimer("qpSolverTimer", 0.5, registry);
+   private final ExecutionTimer qpSolverTimer;
 
-   private final YoInteger numberOfIterations = new YoInteger("numberOfIterations", registry);
-   private final YoInteger numberOfEqualityConstraints = new YoInteger("numberOfEqualityConstraints", registry);
-   private final YoInteger numberOfInequalityConstraints = new YoInteger("numberOfInequalityConstraints", registry);
-   private final YoInteger numberOfConstraints = new YoInteger("numberOfConstraints", registry);
+   private final YoInteger numberOfIterations;
+   private final YoInteger numberOfEqualityConstraints;
+   private final YoInteger numberOfInequalityConstraints;
+   private final YoInteger numberOfConstraints;
 
    private final SimpleActiveSetQPSolverInterface qpSolver = new JavaQuadProgSolver();
 
@@ -40,10 +38,17 @@ public class CoMTrajectoryQPSolver
 
    private final DenseMatrix64F tempJtW;
 
-   public CoMTrajectoryQPSolver(CoMTrajectoryPlannerIndexHandler indexHandler, DoubleProvider omega, YoVariableRegistry parentRegistry)
+   public CoMTrajectoryQPSolver(String prefix, CoMTrajectoryPlannerIndexHandler indexHandler, DoubleProvider omega, YoVariableRegistry parentRegistry)
    {
       this.omega = omega;
       this.indexHandler = indexHandler;
+
+      YoVariableRegistry registry = new YoVariableRegistry(prefix + getClass().getSimpleName());
+      qpSolverTimer = new ExecutionTimer(prefix + "QpSolverTimer", 0.5, registry);
+      numberOfIterations = new YoInteger(prefix + "NumberOfIterations", registry);
+      numberOfEqualityConstraints = new YoInteger(prefix + "NumberOfEqualityConstraints", registry);
+      numberOfInequalityConstraints = new YoInteger(prefix + "NumberOfInequalityConstraints", registry);
+      numberOfConstraints = new YoInteger(prefix + "NumberOfConstraints", registry);
 
       int problemSize = indexHandler.getNumberOfVRPWaypoints();
       solverInput_H = new DenseMatrix64F(problemSize, problemSize);
@@ -68,6 +73,9 @@ public class CoMTrajectoryQPSolver
       solverInput_H.zero();
 
       solverInput_f.zero();
+
+      solverInput_H.reshape(problemSize, problemSize);
+      solverInput_f.reshape(problemSize, 1);
 
       solverInput_Aeq.reshape(0, problemSize);
       solverInput_beq.reshape(0, 1);
@@ -102,6 +110,11 @@ public class CoMTrajectoryQPSolver
       addTaskInternal(taskJacobian, taskObjective, taskWeight, 0);
    }
 
+   public void addTask(DenseMatrix64F taskJacobian, DenseMatrix64F taskObjective, double taskWeight)
+   {
+      addTaskInternal(taskJacobian, taskObjective, taskWeight, 0);
+   }
+
    private void addTaskInternal(DenseMatrix64F taskJacobian, DenseMatrix64F taskObjective, DenseMatrix64F taskWeight, int offset)
    {
       int taskSize = taskJacobian.getNumRows();
@@ -123,5 +136,24 @@ public class CoMTrajectoryQPSolver
       MatrixTools.multAddBlock(-1.0, tempJtW, taskObjective, solverInput_f, offset, 0);
    }
 
+   private void addTaskInternal(DenseMatrix64F taskJacobian, DenseMatrix64F taskObjective, double taskWeight, int offset)
+   {
+      int variables = taskJacobian.getNumCols();
+      if (offset + variables > indexHandler.getNumberOfVRPWaypoints())
+      {
+         throw new RuntimeException("This task does not fit.");
+      }
+
+      // Compute: H += J^T W J
+      MatrixTools.multAddBlockInner(taskWeight, taskJacobian, solverInput_H, offset, offset);
+
+      // Compute: f += - J^T W Objective
+      MatrixTools.multAddBlockTransA(-taskWeight, taskJacobian, taskObjective, solverInput_f, offset, 0);
+   }
+
+   public void getSolution(DenseMatrix64F solutionToPack)
+   {
+      solutionToPack.set(solverOutput);
+   }
 
 }

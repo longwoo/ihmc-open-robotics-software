@@ -9,22 +9,20 @@ import java.util.List;
 
 public class CoMTrajectoryQPInputCalculator
 {
-   private final List<? extends ContactStateProvider> contactSequence;
    private final CoMTrajectoryPlannerIndexHandler indexHandler;
    private final DoubleProvider omega;
 
    private final DenseMatrix64F bezierMapMultiplier = new DenseMatrix64F(40, 40);
    private final DenseMatrix64F tempJ = new DenseMatrix64F(40, 40);
 
-   public CoMTrajectoryQPInputCalculator(List<? extends ContactStateProvider> contactSequence, CoMTrajectoryPlannerIndexHandler indexHandler,
+   public CoMTrajectoryQPInputCalculator(CoMTrajectoryPlannerIndexHandler indexHandler,
                                          DoubleProvider omega)
    {
-      this.contactSequence = contactSequence;
       this.indexHandler = indexHandler;
       this.omega = omega;
    }
 
-   public void computeWorkWeightMatrix(double weight, DenseMatrix64F matrixToPack)
+   public void computeWorkWeightMatrix(List<? extends ContactStateProvider> contactSequence, double weight, DenseMatrix64F matrixToPack)
    {
       for (int segmentNumber = 0; segmentNumber < contactSequence.size(); segmentNumber++)
       {
@@ -36,7 +34,8 @@ public class CoMTrajectoryQPInputCalculator
       }
    }
 
-   public void computeJacobianToCoMCoefficients(DenseMatrix64F coefficientConstraintInv, DenseMatrix64F vrpBoundsJacobian, DenseMatrix64F jacobianToPack)
+   public void computeJacobianToCoMCoefficients(List<? extends ContactStateProvider> contactSequence, DenseMatrix64F coefficientConstraintInv,
+                                                DenseMatrix64F vrpBoundsJacobian, DenseMatrix64F jacobianToPack)
    {
       int size = indexHandler.getNumberOfVRPWaypoints();
 
@@ -46,16 +45,19 @@ public class CoMTrajectoryQPInputCalculator
       tempJ.zero();
       bezierMapMultiplier.zero();
 
+      int waypointSetNumber = 0;
       for (int segmentNumber = 0; segmentNumber < contactSequence.size(); segmentNumber++)
       {
          if (!contactSequence.get(segmentNumber).getContactState().isLoadBearing())
             continue;
 
          double segmentDuration = contactSequence.get(segmentNumber).getTimeInterval().getDuration();
-         CubicBezierCurve.computeMapToCurveBounds(segmentNumber, segmentNumber, bezierMapMultiplier, segmentDuration);
+         CubicBezierCurve.computeMapToCurveBounds(4 * waypointSetNumber, 4 * waypointSetNumber, bezierMapMultiplier, segmentDuration);
+
+         waypointSetNumber++;
       }
 
-      CommonOps.multAddTransA(vrpBoundsJacobian, bezierMapMultiplier, tempJ);
+      CommonOps.multAdd(vrpBoundsJacobian, bezierMapMultiplier, tempJ);
       CommonOps.mult(coefficientConstraintInv, tempJ, jacobianToPack);
    }
 

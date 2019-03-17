@@ -55,6 +55,9 @@ public class CoMTrajectoryOptimizationPlanner implements CoMTrajectoryPlannerInt
 
    private static final double sufficientlyLarge = 1.0e10;
 
+   private static final double workWeight = 1.0;
+   private static final double vrpTrackingWeight = 1.0;
+
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
 
    private final DenseMatrix64F coefficientConstraintMultipliers = new DenseMatrix64F(0, 0);
@@ -78,15 +81,31 @@ public class CoMTrajectoryOptimizationPlanner implements CoMTrajectoryPlannerInt
    private final DenseMatrix64F yCoefficientVector = new DenseMatrix64F(0, 1);
    private final DenseMatrix64F zCoefficientVector = new DenseMatrix64F(0, 1);
 
+   private final DenseMatrix64F xConstraintObjective = new DenseMatrix64F(0, 1);
+   private final DenseMatrix64F yConstraintObjective = new DenseMatrix64F(0, 1);
+   private final DenseMatrix64F zConstraintObjective = new DenseMatrix64F(0, 1);
+
+   private final DenseMatrix64F xVRPSolution = new DenseMatrix64F(0, 1);
+   private final DenseMatrix64F yVRPSolution = new DenseMatrix64F(0, 1);
+   private final DenseMatrix64F zVRPSolution = new DenseMatrix64F(0, 1);
+
+
+   private final DenseMatrix64F workMinimizationWeightMatrix = new DenseMatrix64F(0, 0);
+   private final DenseMatrix64F coefficientsJacobian = new DenseMatrix64F(0, 0);
+   private final DenseMatrix64F vrpTrackingJacobian = new DenseMatrix64F(0, 0);
+
+   private final CoMTrajectoryQPSolver xSolver;
+   private final CoMTrajectoryQPSolver ySolver;
+   private final CoMTrajectoryQPSolver zSolver;
+
    private final FramePoint3D finalDCMPosition = new FramePoint3D();
 
    private final DoubleProvider omega;
    private final double gravityZ;
    private double nominalCoMHeight;
 
-   private final List<? extends ContactStateProvider> contactSequence;
-
    private final CoMTrajectoryPlannerIndexHandler indexHandler;
+   private final CoMTrajectoryQPInputCalculator inputCalculator;
 
    private final FixedFramePoint3DBasics desiredCoMPosition = new FramePoint3D(worldFrame);
    private final FixedFrameVector3DBasics desiredCoMVelocity = new FrameVector3D(worldFrame);
@@ -115,21 +134,24 @@ public class CoMTrajectoryOptimizationPlanner implements CoMTrajectoryPlannerInt
 
    private int numberOfConstraints = 0;
 
-   public CoMTrajectoryOptimizationPlanner(List<? extends ContactStateProvider> contactSequence, DoubleProvider omega, double gravityZ, double nominalCoMHeight,
-                                           YoVariableRegistry parentRegistry)
+   public CoMTrajectoryOptimizationPlanner(DoubleProvider omega, double gravityZ, double nominalCoMHeight, YoVariableRegistry parentRegistry)
    {
-      this(contactSequence, omega, gravityZ, nominalCoMHeight, parentRegistry, null);
+      this(omega, gravityZ, nominalCoMHeight, parentRegistry, null);
    }
 
-   public CoMTrajectoryOptimizationPlanner(List<? extends ContactStateProvider> contactSequence, DoubleProvider omega, double gravityZ, double nominalCoMHeight,
-                                           YoVariableRegistry parentRegistry, YoGraphicsListRegistry yoGraphicsListRegistry)
+   public CoMTrajectoryOptimizationPlanner(DoubleProvider omega, double gravityZ, double nominalCoMHeight, YoVariableRegistry parentRegistry,
+                                           YoGraphicsListRegistry yoGraphicsListRegistry)
    {
-      this.contactSequence = contactSequence;
       this.omega = omega;
       this.nominalCoMHeight = nominalCoMHeight;
       this.gravityZ = Math.abs(gravityZ);
 
-      indexHandler = new CoMTrajectoryPlannerIndexHandler(contactSequence);
+      indexHandler = new CoMTrajectoryPlannerIndexHandler();
+      inputCalculator = new CoMTrajectoryQPInputCalculator(indexHandler, omega);
+
+      xSolver = new CoMTrajectoryQPSolver("xCoM", indexHandler, omega, registry);
+      ySolver = new CoMTrajectoryQPSolver("yCoM", indexHandler, omega, registry);
+      zSolver = new CoMTrajectoryQPSolver("zCoM", indexHandler, omega, registry);
 
       for (int i = 0; i < maxCapacity + 1; i++)
       {
@@ -177,36 +199,60 @@ public class CoMTrajectoryOptimizationPlanner implements CoMTrajectoryPlannerInt
 
    /** {@inheritDoc} */
    @Override
-   public void solveForTrajectory()
+   public void solveForTrajectory(List<? extends ContactStateProvider> contactSequence)
    {
       if (!ContactStateProviderTools.checkContactSequenceIsValid(contactSequence))
          throw new IllegalArgumentException("The contact sequence is not valid.");
 
-      indexHandler.update();
+      indexHandler.update(contactSequence);
 
       resetMatrices();
 
       int numberOfPhases = contactSequence.size();
 
-      computeVRPWaypointsFromContactSequence();
+      computeVRPWaypointsFromContactSequence(contactSequence);
 
 
-      solveForCoefficientConstraintMatrix();
+      solveForCoefficientConstraintMatrix(contactSequence);
 
-      // map from VRP waypoints to the value
-      xEquivalents.set(xConstants);
-      yEquivalents.set(yConstants);
-      zEquivalents.set(zConstants);
+      inputCalculator.computeWorkWeightMatrix(contactSequence, workWeight, workMinimizationWeightMatrix);
+      inputCalculator.computeJacobianToCoMCoefficients(contactSequence, coefficientConstraintMultipliersInv, vrpWaypointJacobian, coefficientsJacobian);
+      NativeCommonOps.mult(coefficientConstraintMultipliersInv, xConstants, xConstraintObjective);
+      NativeCommonOps.mult(coefficientConstraintMultipliersInv, yConstants, yConstraintObjective);
+      NativeCommonOps.mult(coefficientConstraintMultipliersInv, zConstants, zConstraintObjective);
+      CommonOps.scale(-1.0, xConstraintObjective);
+      CommonOps.scale(-1.0, yConstraintObjective);
+      CommonOps.scale(-1.0, zConstraintObjective);
 
-      CommonOps.multAdd(vrpWaypointJacobian, vrpXWaypoints, xEquivalents);
-      CommonOps.multAdd(vrpWaypointJacobian, vrpYWaypoints, yEquivalents);
-      CommonOps.multAdd(vrpWaypointJacobian, vrpZWaypoints, zEquivalents);
+      xSolver.reset();
+      ySolver.reset();
+      zSolver.reset();
+
+      xSolver.addTask(coefficientsJacobian, xConstraintObjective, workMinimizationWeightMatrix);
+      ySolver.addTask(coefficientsJacobian, yConstraintObjective, workMinimizationWeightMatrix);
+      zSolver.addTask(coefficientsJacobian, zConstraintObjective, workMinimizationWeightMatrix);
+
+      xSolver.addTask(vrpTrackingJacobian, vrpXWaypoints, vrpTrackingWeight);
+      ySolver.addTask(vrpTrackingJacobian, vrpYWaypoints, vrpTrackingWeight);
+      zSolver.addTask(vrpTrackingJacobian, vrpZWaypoints, vrpTrackingWeight);
 
 
+      xSolver.solve();
+      ySolver.solve();
+      zSolver.solve();
 
-      CommonOps.mult(coefficientConstraintMultipliersInv, xEquivalents, xCoefficientVector);
-      CommonOps.mult(coefficientConstraintMultipliersInv, yEquivalents, yCoefficientVector);
-      CommonOps.mult(coefficientConstraintMultipliersInv, zEquivalents, zCoefficientVector);
+      xSolver.getSolution(xVRPSolution);
+      ySolver.getSolution(yVRPSolution);
+      zSolver.getSolution(zVRPSolution);
+
+      // construct the coefficient vector from the vrp solutions
+      CommonOps.scale(-1.0, xConstraintObjective, xCoefficientVector);
+      CommonOps.scale(-1.0, yConstraintObjective, yCoefficientVector);
+      CommonOps.scale(-1.0, zConstraintObjective, zCoefficientVector);
+      CommonOps.multAdd(coefficientsJacobian, xVRPSolution, xCoefficientVector);
+      CommonOps.multAdd(coefficientsJacobian, yVRPSolution, yCoefficientVector);
+      CommonOps.multAdd(coefficientsJacobian, zVRPSolution, zCoefficientVector);
+
 
       // update coefficient holders
       int firstCoefficientIndex = 0;
@@ -243,7 +289,7 @@ public class CoMTrajectoryOptimizationPlanner implements CoMTrajectoryPlannerInt
       updateCornerPoints(numberOfPhases);
    }
 
-   private void computeVRPWaypointsFromContactSequence()
+   private void computeVRPWaypointsFromContactSequence(List<? extends ContactStateProvider> contactSequence)
    {
       startVRPPositions.clear();
       endVRPPositions.clear();
@@ -468,6 +514,18 @@ public class CoMTrajectoryOptimizationPlanner implements CoMTrajectoryPlannerInt
       yCoefficientVector.reshape(size, 1);
       zCoefficientVector.reshape(size, 1);
 
+      workMinimizationWeightMatrix.reshape(size, size);
+      coefficientsJacobian.reshape(size, numberOfVRPWaypoints);
+      vrpTrackingJacobian.reshape(numberOfVRPWaypoints, numberOfVRPWaypoints);
+
+      xConstraintObjective.reshape(size, 1);
+      yConstraintObjective.reshape(size, 1);
+      zConstraintObjective.reshape(size, 1);
+
+      xVRPSolution.reshape(numberOfVRPWaypoints, 1);
+      yVRPSolution.reshape(numberOfVRPWaypoints, 1);
+      zVRPSolution.reshape(numberOfVRPWaypoints, 1);
+
       coefficientConstraintMultipliers.zero();
       coefficientConstraintMultipliersInv.zero();
       xEquivalents.zero();
@@ -483,30 +541,43 @@ public class CoMTrajectoryOptimizationPlanner implements CoMTrajectoryPlannerInt
       xCoefficientVector.zero();
       yCoefficientVector.zero();
       zCoefficientVector.zero();
+
+      workMinimizationWeightMatrix.zero();
+      coefficientsJacobian.zero();
+
+      xConstraintObjective.zero();
+      yConstraintObjective.zero();
+      zConstraintObjective.zero();
+
+      xVRPSolution.zero();
+      yVRPSolution.zero();
+      zVRPSolution.zero();
+
+      CommonOps.setIdentity(vrpTrackingJacobian);
    }
 
-   private void solveForCoefficientConstraintMatrix()
+   private void solveForCoefficientConstraintMatrix(List<? extends ContactStateProvider> contactSequence)
    {
       int numberOfPhases = contactSequence.size();
       int numberOfTransitions = numberOfPhases - 1;
 
-      computeVRPWaypointsFromContactSequence();
+      computeVRPWaypointsFromContactSequence(contactSequence);
 
       numberOfConstraints = 0;
 
       // set initial constraint
       setCoMPositionConstraint(currentCoMPosition);
-      setDynamicsInitialConstraint(0);
+      setDynamicsInitialConstraint(contactSequence, 0);
 
       // add transition continuity constraints
       for (int transition = 0; transition < numberOfTransitions; transition++)
       {
          int previousSequence = transition;
          int nextSequence = transition + 1;
-         setCoMPositionContinuity(previousSequence, nextSequence);
-         setCoMVelocityContinuity(previousSequence, nextSequence);
-         setDynamicsFinalConstraint(previousSequence);
-         setDynamicsInitialConstraint(nextSequence);
+         setCoMPositionContinuity(contactSequence, previousSequence, nextSequence);
+         setCoMVelocityContinuity(contactSequence, previousSequence, nextSequence);
+         setDynamicsFinalConstraint(contactSequence, previousSequence);
+         setDynamicsInitialConstraint(contactSequence, nextSequence);
       }
 
       // set terminal constraint
@@ -514,7 +585,7 @@ public class CoMTrajectoryOptimizationPlanner implements CoMTrajectoryPlannerInt
       finalDCMPosition.set(lastContactPhase.getCopEndPosition());
       finalDCMPosition.addZ(nominalCoMHeight);
       setDCMPositionConstraint(numberOfPhases - 1, lastContactPhase.getTimeInterval().getDuration(), finalDCMPosition);
-      setDynamicsFinalConstraint(numberOfPhases - 1);
+      setDynamicsFinalConstraint(contactSequence, numberOfPhases - 1);
 
 
       // solve for coefficients
@@ -622,7 +693,7 @@ public class CoMTrajectoryOptimizationPlanner implements CoMTrajectoryPlannerInt
     * @param previousSequence i-1 in the above equations.
     * @param nextSequence i in the above equations.
     */
-   private void setCoMPositionContinuity(int previousSequence, int nextSequence)
+   private void setCoMPositionContinuity(List<? extends ContactStateProvider> contactSequence, int previousSequence, int nextSequence)
    {
       ContactStateProvider previousContact = contactSequence.get(previousSequence);
       double omega = this.omega.getValue();
@@ -664,7 +735,7 @@ public class CoMTrajectoryOptimizationPlanner implements CoMTrajectoryPlannerInt
     * @param previousSequence i-1 in the above equations.
     * @param nextSequence i in the above equations.
     */
-   private void setCoMVelocityContinuity(int previousSequence, int nextSequence)
+   private void setCoMVelocityContinuity(List<? extends ContactStateProvider> contactSequence, int previousSequence, int nextSequence)
    {
       ContactStateProvider previousContact = contactSequence.get(previousSequence);
       double omega = this.omega.getValue();
@@ -697,7 +768,7 @@ public class CoMTrajectoryOptimizationPlanner implements CoMTrajectoryPlannerInt
     *
     * @param sequenceId desired trajectory segment.
     */
-   private void setDynamicsInitialConstraint(int sequenceId)
+   private void setDynamicsInitialConstraint(List<? extends ContactStateProvider> contactSequence, int sequenceId)
    {
       ContactStateProvider contactStateProvider = contactSequence.get(sequenceId);
       ContactState contactState = contactStateProvider.getContactState();
@@ -720,7 +791,7 @@ public class CoMTrajectoryOptimizationPlanner implements CoMTrajectoryPlannerInt
     *
     * @param sequenceId desired trajectory segment.
     */
-   private void setDynamicsFinalConstraint(int sequenceId)
+   private void setDynamicsFinalConstraint(List<? extends ContactStateProvider> contactSequence, int sequenceId)
    {
       ContactStateProvider contactStateProvider = contactSequence.get(sequenceId);
       ContactState contactState = contactStateProvider.getContactState();

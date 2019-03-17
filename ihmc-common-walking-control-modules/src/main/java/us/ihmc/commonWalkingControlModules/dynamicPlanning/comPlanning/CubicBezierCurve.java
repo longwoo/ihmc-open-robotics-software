@@ -46,9 +46,6 @@ public class CubicBezierCurve
 
    public static void computeMapToCurveBounds(int rowStart, int colStart, DenseMatrix64F mapToPack, double duration)
    {
-      mapToPack.reshape(4, 4);
-      mapToPack.zero();
-
       mapToPack.set(rowStart,     colStart,     1.0); // initial position
       mapToPack.set(rowStart + 1, colStart,    -3.0); // initial velocity
       mapToPack.set(rowStart + 1, colStart + 1, 3.0);
