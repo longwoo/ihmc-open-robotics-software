@@ -1,5 +1,6 @@
 package us.ihmc.commonWalkingControlModules.dynamicPlanning.comPlanning;
 
+import org.ejml.data.DenseMatrix64F;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.interfaces.FixedFramePoint3DBasics;
 import us.ihmc.euclid.referenceFrame.interfaces.FixedFrameVector3DBasics;
@@ -9,6 +10,222 @@ public class CoMTrajectoryPlannerTools
 {
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
    private static final double sufficientlyLarge = 1.0e10;
+
+   /**
+    * <p> Sets the continuity constraint on the initial CoM position. This DOES result in a initial discontinuity on the desired DCM location,
+    * coming from a discontinuity on the desired CoM Velocity. </p>
+    * <p> This constraint should be used for the initial position of the center of mass to properly initialize the trajectory. </p>
+    * <p> Recall that the equation for the center of mass is defined by </p>
+    * <p>
+    *    x<sub>i</sub>(t<sub>i</sub>) = c<sub>0,i</sub> e<sup>&omega; t<sub>i</sub></sup> + c<sub>1,i</sub> e<sup>-&omega; t<sub>i</sub></sup> +
+    *    c<sub>2,i</sub> t<sub>i</sub><sup>3</sup> + c<sub>3,i</sub> t<sub>i</sub><sup>2</sup> +
+    *    c<sub>4,i</sub> t<sub>i</sub> + c<sub>5,i</sub>.
+    * </p>
+    * <p>
+    *    This constraint defines
+    * </p>
+    * <p>
+    *    x<sub>0</sub>(0) = x<sub>d</sub>,
+    * </p>
+    * <p>
+    *    substituting in the coefficients into the constraint matrix.
+    * </p>
+    * @param centerOfMassLocationForConstraint x<sub>d</sub> in the above equations
+    */
+   static void addCoMPositionConstraint(FramePoint3DReadOnly centerOfMassLocationForConstraint, double omega, double time, int sequenceId, int rowStart,
+                                        DenseMatrix64F constraintMatrixToPack, DenseMatrix64F xObjectiveMatrixToPack, DenseMatrix64F yObjectiveMatrixToPack,
+                                        DenseMatrix64F zObjectiveMatrixToPack)
+   {
+      centerOfMassLocationForConstraint.checkReferenceFrameMatch(worldFrame);
+
+      int colStart = 6 * sequenceId;
+      constraintMatrixToPack.set(rowStart, colStart,     getCoMPositionFirstCoefficient(omega, time));
+      constraintMatrixToPack.set(rowStart, colStart + 1, getCoMPositionSecondCoefficient(omega, time));
+      constraintMatrixToPack.set(rowStart, colStart + 2, getCoMPositionThirdCoefficient(time));
+      constraintMatrixToPack.set(rowStart, colStart + 3, getCoMPositionFourthCoefficient(time));
+      constraintMatrixToPack.set(rowStart, colStart + 4, getCoMPositionFifthCoefficient(time));
+      constraintMatrixToPack.set(rowStart, colStart + 5, getCoMPositionSixthCoefficient());
+
+      xObjectiveMatrixToPack.add(rowStart, 0, centerOfMassLocationForConstraint.getX());
+      yObjectiveMatrixToPack.add(rowStart, 0, centerOfMassLocationForConstraint.getY());
+      zObjectiveMatrixToPack.add(rowStart, 0, centerOfMassLocationForConstraint.getZ());
+   }
+
+   /**
+    * <p> Sets a constraint on the desired DCM position. This constraint is useful for constraining the terminal location of the DCM trajectory. </p>
+    * <p> Recall that the equation for the center of mass position is defined by </p>
+    * <p>
+    *    x<sub>i</sub>(t<sub>i</sub>) = c<sub>0,i</sub> e<sup>&omega; t<sub>i</sub></sup> + c<sub>1,i</sub> e<sup>-&omega; t<sub>i</sub></sup> +
+    *    c<sub>2,i</sub> t<sub>i</sub><sup>3</sup> + c<sub>3,i</sub> t<sub>i</sub><sup>2</sup> +
+    *    c<sub>4,i</sub> t<sub>i</sub> + c<sub>5,i</sub>.
+    * </p>
+    * <p> and the center of mass velocity is defined by </p>
+    * <p>
+    *    d/dt x<sub>i</sub>(t<sub>i</sub>) = &omega; c<sub>0,i</sub> e<sup>&omega; t<sub>i</sub></sup> -
+    *    &omega; c<sub>1,i</sub> e<sup>-&omega; t<sub>i</sub></sup> + 3 c<sub>2,i</sub> t<sub>i</sub><sup>2</sup> +
+    *     2 c<sub>3,i</sub> t<sub>i</sub> + c<sub>4,i</sub>
+    * </p>
+    * <p>
+    *    This constraint is then combining these two, saying
+    * </p>
+    * <p> x<sub>i</sub>(t<sub>i</sub>) + 1 / &omega; d/dt x<sub>i</sub>(t<sub>i</sub>) = &xi;<sub>d</sub>,</p>
+    * <p> substituting in the appropriate coefficients. </p>
+    * @param sequenceId i in the above equations
+    * @param time t<sub>i</sub> in the above equations
+    * @param desiredDCMPosition desired DCM location. &xi;<sub>d</sub> in the above equations.
+    */
+   static void addDCMPositionConstraint(int sequenceId, int rowStart, double time, double omega, FramePoint3DReadOnly desiredDCMPosition,
+                                         DenseMatrix64F constraintMatrixToPack, DenseMatrix64F xObjectiveMatrixToPack, DenseMatrix64F yObjectiveMatrixToPack,
+                                         DenseMatrix64F zObjectiveMatrixToPack)
+   {
+      desiredDCMPosition.checkReferenceFrameMatch(worldFrame);
+
+      int startIndex = 6 * sequenceId;
+
+      // add constraints on terminal DCM position
+      constraintMatrixToPack.set(rowStart, startIndex,     getDCMPositionFirstCoefficient(omega, time));
+      constraintMatrixToPack.set(rowStart, startIndex + 1, getDCMPositionSecondCoefficient());
+      constraintMatrixToPack.set(rowStart, startIndex + 2, getDCMPositionThirdCoefficient(omega, time));
+      constraintMatrixToPack.set(rowStart, startIndex + 3, getDCMPositionFourthCoefficient(omega, time));
+      constraintMatrixToPack.set(rowStart, startIndex + 4, getDCMPositionFifthCoefficient(omega, time));
+      constraintMatrixToPack.set(rowStart, startIndex + 5, getDCMPositionSixthCoefficient());
+
+      xObjectiveMatrixToPack.add(rowStart, 0, desiredDCMPosition.getX());
+      yObjectiveMatrixToPack.add(rowStart, 0, desiredDCMPosition.getY());
+      zObjectiveMatrixToPack.add(rowStart, 0, desiredDCMPosition.getZ());
+   }
+
+   /**
+    * <p> Adds a constraint for the desired VRP position.</p>
+    * <p> Recall that the VRP is defined as </p>
+    * <p> v<sub>i</sub>(t<sub>i</sub>) =  c<sub>2,i</sub> t<sub>i</sub><sup>3</sup> + c<sub>3,i</sub> t<sub>i</sub><sup>2</sup> +
+    * (c<sub>4,i</sub> - 6/&omega;<sup>2</sup> c<sub>2,i</sub>) t<sub>i</sub> - 2/&omega; c<sub>3,i</sub> + c<sub>5,i</sub></p>.
+    * <p> This constraint then says </p>
+    * <p> v<sub>i</sub>(t<sub>i</sub>) = J v<sub>d</sub> </p>
+    * <p> where J is a Jacobian that maps from a vector of desired VRP waypoints to the constraint form, and </p>
+    * <p> v<sub>d,j</sub> = v<sub>r</sub> </p>
+    * @param sequenceId segment of interest, i in the above equations
+    * @param vrpWaypointPositionIndex current vrp waypoint index, j in the above equations
+    * @param time time in the segment, t<sub>i</sub> in the above equations
+    * @param desiredVRPPosition reference VRP position, v<sub>r</sub> in the above equations.
+    */
+   static void addVRPPositionConstraint(int sequenceId, int constraintNumber, int vrpWaypointPositionIndex, double time, double omega,
+                                        FramePoint3DReadOnly desiredVRPPosition,
+                                        DenseMatrix64F constraintMatrixToPack, DenseMatrix64F xObjectiveMatrixToPack, DenseMatrix64F yObjectiveMatrixToPack,
+                                        DenseMatrix64F zObjectiveMatrixToPack, DenseMatrix64F vrpWaypointJacobianToPack)
+   {
+      int startIndex = 6 * sequenceId;
+
+      desiredVRPPosition.checkReferenceFrameMatch(worldFrame);
+
+      constraintMatrixToPack.set(constraintNumber, startIndex + 0, CoMTrajectoryPlannerTools.getVRPPositionFirstCoefficient());
+      constraintMatrixToPack.set(constraintNumber, startIndex + 1, CoMTrajectoryPlannerTools.getVRPPositionSecondCoefficient());
+      constraintMatrixToPack.set(constraintNumber, startIndex + 2, CoMTrajectoryPlannerTools.getVRPPositionThirdCoefficient(omega, time));
+      constraintMatrixToPack.set(constraintNumber, startIndex + 3, CoMTrajectoryPlannerTools.getVRPPositionFourthCoefficient(omega, time));
+      constraintMatrixToPack.set(constraintNumber, startIndex + 4, CoMTrajectoryPlannerTools.getVRPPositionFifthCoefficient(time));
+      constraintMatrixToPack.set(constraintNumber, startIndex + 5, CoMTrajectoryPlannerTools.getVRPPositionSixthCoefficient());
+
+      vrpWaypointJacobianToPack.set(constraintNumber, vrpWaypointPositionIndex, 1.0);
+
+      xObjectiveMatrixToPack.set(vrpWaypointPositionIndex, 0, desiredVRPPosition.getX());
+      yObjectiveMatrixToPack.set(vrpWaypointPositionIndex, 0, desiredVRPPosition.getY());
+      zObjectiveMatrixToPack.set(vrpWaypointPositionIndex, 0, desiredVRPPosition.getZ());
+   }
+
+   /**
+    * <p> Set a continuity constraint on the CoM position at a state change, aka a trajectory knot.. </p>
+    * <p> Recall that the equation for the center of mass position is defined by </p>
+    * <p>
+    *    x<sub>i</sub>(t<sub>i</sub>) = c<sub>0,i</sub> e<sup>&omega; t<sub>i</sub></sup> + c<sub>1,i</sub> e<sup>-&omega; t<sub>i</sub></sup> +
+    *    c<sub>2,i</sub> t<sub>i</sub><sup>3</sup> + c<sub>3,i</sub> t<sub>i</sub><sup>2</sup> +
+    *    c<sub>4,i</sub> t<sub>i</sub> + c<sub>5,i</sub>.
+    * </p>
+    * <p> This constraint is then defined as </p>
+    * <p> x<sub>i-1</sub>(T<sub>i-1</sub>) = x<sub>i</sub>(0), </p>
+    * <p> substituting in the trajectory coefficients. </p>
+    *
+    * @param previousSequence i-1 in the above equations.
+    * @param nextSequence i in the above equations.
+    */
+   static void addCoMPositionContinuityConstraint(int previousSequence, int nextSequence, int constraintRow, double omega, double previousDuration,
+                                                  DenseMatrix64F constraintMatrixToPack)
+   {
+      // move next sequence coefficients to the left hand side
+      int previousStartIndex = 6 * previousSequence;
+      int nextStartIndex = 6 * nextSequence;
+
+      constraintMatrixToPack.set(constraintRow, previousStartIndex,      getCoMPositionFirstCoefficient(omega, previousDuration));
+      constraintMatrixToPack.set(constraintRow, previousStartIndex + 1,  getCoMPositionSecondCoefficient(omega, previousDuration));
+      constraintMatrixToPack.set(constraintRow, previousStartIndex + 2,  getCoMPositionThirdCoefficient(previousDuration));
+      constraintMatrixToPack.set(constraintRow, previousStartIndex + 3,  getCoMPositionFourthCoefficient(previousDuration));
+      constraintMatrixToPack.set(constraintRow, previousStartIndex + 4,  getCoMPositionFifthCoefficient(previousDuration));
+      constraintMatrixToPack.set(constraintRow, previousStartIndex + 5,  getCoMPositionSixthCoefficient());
+      constraintMatrixToPack.set(constraintRow, nextStartIndex,         -getCoMPositionFirstCoefficient(omega, 0.0));
+      constraintMatrixToPack.set(constraintRow, nextStartIndex + 1,     -getCoMPositionSecondCoefficient(omega, 0.0));
+      constraintMatrixToPack.set(constraintRow, nextStartIndex + 2,     -getCoMPositionThirdCoefficient(0.0));
+      constraintMatrixToPack.set(constraintRow, nextStartIndex + 3,     -getCoMPositionFourthCoefficient(0.0));
+      constraintMatrixToPack.set(constraintRow, nextStartIndex + 4,     -getCoMPositionFifthCoefficient(0.0));
+      constraintMatrixToPack.set(constraintRow, nextStartIndex + 5,     -getCoMPositionSixthCoefficient());
+   }
+
+   /**
+    * <p> Set a continuity constraint on the CoM velocity at a state change, aka a trajectory knot.. </p>
+    * <p> Recall that the equation for the center of mass position is defined by </p>
+    * <p>
+    *    d/dt x<sub>i</sub>(t<sub>i</sub>) = &omega; c<sub>0,i</sub> e<sup>&omega; t<sub>i</sub></sup> -
+    *    &omega; c<sub>1,i</sub> e<sup>-&omega; t<sub>i</sub></sup> + 3 c<sub>2,i</sub> t<sub>i</sub><sup>2</sup> +
+    *     2 c<sub>3,i</sub> t<sub>i</sub> + c<sub>4,i</sub>.
+    * </p>
+    * <p> This constraint is then defined as </p>
+    * <p> d / dt x<sub>i-1</sub>(T<sub>i-1</sub>) = d / dt x<sub>i</sub>(0), </p>
+    * <p> substituting in the trajectory coefficients. </p>
+    *
+    * @param previousSequence i-1 in the above equations.
+    * @param nextSequence i in the above equations.
+    */
+   static void addCoMVelocityContinuityConstraint(int previousSequence, int nextSequence, int constraintRow, double omega, double previousDuration,
+                                                  DenseMatrix64F constraintMatrixToPack)
+   {
+      // move next sequence coefficients to the left hand side
+      int previousStartIndex = 6 * previousSequence;
+      int nextStartIndex = 6 * nextSequence;
+
+      constraintMatrixToPack.set(constraintRow, previousStartIndex,      getCoMVelocityFirstCoefficient(omega, previousDuration));
+      constraintMatrixToPack.set(constraintRow, previousStartIndex + 1,  getCoMVelocitySecondCoefficient(omega, previousDuration));
+      constraintMatrixToPack.set(constraintRow, previousStartIndex + 2,  getCoMVelocityThirdCoefficient(previousDuration));
+      constraintMatrixToPack.set(constraintRow, previousStartIndex + 3,  getCoMVelocityFourthCoefficient(previousDuration));
+      constraintMatrixToPack.set(constraintRow, previousStartIndex + 4,  getCoMVelocityFifthCoefficient());
+      constraintMatrixToPack.set(constraintRow, previousStartIndex + 5,  getCoMVelocitySixthCoefficient());
+      constraintMatrixToPack.set(constraintRow, nextStartIndex,         -getCoMVelocityFirstCoefficient(omega, 0.0));
+      constraintMatrixToPack.set(constraintRow, nextStartIndex + 1,     -getCoMVelocitySecondCoefficient(omega, 0.0));
+      constraintMatrixToPack.set(constraintRow, nextStartIndex + 2,     -getCoMVelocityThirdCoefficient(0.0));
+      constraintMatrixToPack.set(constraintRow, nextStartIndex + 3,     -getCoMVelocityFourthCoefficient(0.0));
+      constraintMatrixToPack.set(constraintRow, nextStartIndex + 4,     -getCoMVelocityFifthCoefficient());
+      constraintMatrixToPack.set(constraintRow, nextStartIndex + 5,     -getCoMVelocitySixthCoefficient());
+   }
+
+      /**
+       * <p> Adds a constraint for the CoM trajectory to have a jerk equal to 0.0 at time t.</p>
+       * <p> Recall that the CoM jerk is defined as </p>
+       * d<sup>3</sup> / dt<sup>3</sup> x<sub>i</sub>(t<sub>i</sub>) = &omega;<sup>3</sup> c<sub>0,i</sub> e<sup>&omega; t<sub>i</sub></sup> -
+       * &omega;<sup>3</sup> c<sub>1,i</sub> e<sup>-&omega; t<sub>i</sub></sup> + 6 c<sub>2,i</sub>
+       * <p> This constraint then states that </p>
+       * <p> d<sup>3</sup> / dt<sup>3</sup> x<sub>i</sub>(t<sub>i</sub>) = 0.0, </p>
+       * <p> substituting in the appropriate coefficients. </p>
+       * @param sequenceId segment of interest, i in the above equations.
+       * @param time time for the constraint, t<sub>i</sub> in the above equations.
+       */
+   static void constrainCoMJerkToZero(double time, double omega, int sequenceId, int rowStart, DenseMatrix64F matrixToPack)
+   {
+      int colStart = 6 * sequenceId;
+      matrixToPack.set(rowStart, colStart, getCoMJerkFirstCoefficient(omega, time));
+      matrixToPack.set(rowStart, colStart + 1, getCoMJerkSecondCoefficient(omega, time));
+      matrixToPack.set(rowStart, colStart + 2, getCoMJerkThirdCoefficient());
+      matrixToPack.set(rowStart, colStart + 3, getCoMJerkFourthCoefficient());
+      matrixToPack.set(rowStart, colStart + 4, getCoMJerkFifthCoefficient());
+      matrixToPack.set(rowStart, colStart + 5, getCoMJerkSixthCoefficient());
+   }
+
 
    /**
     * e<sup>&omega; t</sup>

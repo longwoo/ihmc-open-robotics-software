@@ -619,20 +619,8 @@ public class CoMTrajectoryOptimizationPlanner implements CoMTrajectoryPlannerInt
     */
    private void setCoMPositionConstraint(FramePoint3DReadOnly centerOfMassLocationForConstraint)
    {
-      centerOfMassLocationForConstraint.checkReferenceFrameMatch(ReferenceFrame.getWorldFrame());
-      double omega = this.omega.getValue();
-
-      coefficientConstraintMultipliers.set(numberOfConstraints, 0, getCoMPositionFirstCoefficient(omega, 0.0));
-      coefficientConstraintMultipliers.set(numberOfConstraints, 1, getCoMPositionSecondCoefficient(omega, 0.0));
-      coefficientConstraintMultipliers.set(numberOfConstraints, 2, getCoMPositionThirdCoefficient(0.0));
-      coefficientConstraintMultipliers.set(numberOfConstraints, 3, getCoMPositionFourthCoefficient(0.0));
-      coefficientConstraintMultipliers.set(numberOfConstraints, 4, getCoMPositionFifthCoefficient(0.0));
-      coefficientConstraintMultipliers.set(numberOfConstraints, 5, getCoMPositionSixthCoefficient());
-
-      xConstants.add(numberOfConstraints, 0, centerOfMassLocationForConstraint.getX());
-      yConstants.add(numberOfConstraints, 0, centerOfMassLocationForConstraint.getY());
-      zConstants.add(numberOfConstraints, 0, centerOfMassLocationForConstraint.getZ());
-
+      CoMTrajectoryPlannerTools.addCoMPositionConstraint(centerOfMassLocationForConstraint, omega.getValue(), 0.0, 0, numberOfConstraints,
+                                                         coefficientConstraintMultipliers, xConstants, yConstants, zConstants);
       numberOfConstraints++;
    }
 
@@ -661,23 +649,8 @@ public class CoMTrajectoryOptimizationPlanner implements CoMTrajectoryPlannerInt
     */
    private void setDCMPositionConstraint(int sequenceId, double time, FramePoint3DReadOnly desiredDCMPosition)
    {
-      desiredDCMPosition.checkReferenceFrameMatch(worldFrame);
-
-      double omega = this.omega.getValue();
-
-      int startIndex = indexHandler.getContactSequenceStartIndex(sequenceId);
-
-      // add constraints on terminal DCM position
-      coefficientConstraintMultipliers.set(numberOfConstraints, startIndex + 0, getDCMPositionFirstCoefficient(omega, time));
-      coefficientConstraintMultipliers.set(numberOfConstraints, startIndex + 1, getDCMPositionSecondCoefficient());
-      coefficientConstraintMultipliers.set(numberOfConstraints, startIndex + 2, getDCMPositionThirdCoefficient(omega, time));
-      coefficientConstraintMultipliers.set(numberOfConstraints, startIndex + 3, getDCMPositionFourthCoefficient(omega, time));
-      coefficientConstraintMultipliers.set(numberOfConstraints, startIndex + 4, getDCMPositionFifthCoefficient(omega, time));
-      coefficientConstraintMultipliers.set(numberOfConstraints, startIndex + 5, getDCMPositionSixthCoefficient());
-
-      xConstants.add(numberOfConstraints, 0, desiredDCMPosition.getX());
-      yConstants.add(numberOfConstraints, 0, desiredDCMPosition.getY());
-      zConstants.add(numberOfConstraints, 0, desiredDCMPosition.getZ());
+      CoMTrajectoryPlannerTools.addDCMPositionConstraint(sequenceId, numberOfConstraints, time, omega.getValue(), desiredDCMPosition,
+                                                         coefficientConstraintMultipliers, xConstants, yConstants, zConstants);
 
       numberOfConstraints++;
    }
@@ -699,27 +672,9 @@ public class CoMTrajectoryOptimizationPlanner implements CoMTrajectoryPlannerInt
     */
    private void setCoMPositionContinuity(List<? extends ContactStateProvider> contactSequence, int previousSequence, int nextSequence)
    {
-      ContactStateProvider previousContact = contactSequence.get(previousSequence);
-      double omega = this.omega.getValue();
-      double previousDuration = previousContact.getTimeInterval().getDuration();
-
-      // move next sequence coefficients to the left hand side, and previous sequence constants to the right
-      int previousStartIndex = indexHandler.getContactSequenceStartIndex(previousSequence);
-      int nextStartIndex = indexHandler.getContactSequenceStartIndex(nextSequence);
-
-
-      coefficientConstraintMultipliers.set(numberOfConstraints, previousStartIndex + 0, getCoMPositionFirstCoefficient(omega, previousDuration));
-      coefficientConstraintMultipliers.set(numberOfConstraints, previousStartIndex + 1, getCoMPositionSecondCoefficient(omega, previousDuration));
-      coefficientConstraintMultipliers.set(numberOfConstraints, previousStartIndex + 2, getCoMPositionThirdCoefficient(previousDuration));
-      coefficientConstraintMultipliers.set(numberOfConstraints, previousStartIndex + 3, getCoMPositionFourthCoefficient(previousDuration));
-      coefficientConstraintMultipliers.set(numberOfConstraints, previousStartIndex + 4, getCoMPositionFifthCoefficient(previousDuration));
-      coefficientConstraintMultipliers.set(numberOfConstraints, previousStartIndex + 5, getCoMPositionSixthCoefficient());
-      coefficientConstraintMultipliers.set(numberOfConstraints, nextStartIndex + 0, -getCoMPositionFirstCoefficient(omega, 0.0));
-      coefficientConstraintMultipliers.set(numberOfConstraints, nextStartIndex + 1, -getCoMPositionSecondCoefficient(omega, 0.0));
-      coefficientConstraintMultipliers.set(numberOfConstraints, nextStartIndex + 2, -getCoMPositionThirdCoefficient(0.0));
-      coefficientConstraintMultipliers.set(numberOfConstraints, nextStartIndex + 3, -getCoMPositionFourthCoefficient(0.0));
-      coefficientConstraintMultipliers.set(numberOfConstraints, nextStartIndex + 4, -getCoMPositionFifthCoefficient(0.0));
-      coefficientConstraintMultipliers.set(numberOfConstraints, nextStartIndex + 5, -getCoMPositionSixthCoefficient());
+      double previousDuration = contactSequence.get(previousSequence).getTimeInterval().getDuration();
+      CoMTrajectoryPlannerTools.addCoMPositionContinuityConstraint(previousSequence, nextSequence, numberOfConstraints, omega.getValue(), previousDuration,
+                                                                   coefficientConstraintMultipliers);
 
       numberOfConstraints++;
    }
@@ -741,26 +696,9 @@ public class CoMTrajectoryOptimizationPlanner implements CoMTrajectoryPlannerInt
     */
    private void setCoMVelocityContinuity(List<? extends ContactStateProvider> contactSequence, int previousSequence, int nextSequence)
    {
-      ContactStateProvider previousContact = contactSequence.get(previousSequence);
-      double omega = this.omega.getValue();
-
-      double previousDuration = previousContact.getTimeInterval().getDuration();
-
-      int previousStartIndex = indexHandler.getContactSequenceStartIndex(previousSequence);
-      int nextStartIndex = indexHandler.getContactSequenceStartIndex(nextSequence);
-
-      coefficientConstraintMultipliers.set(numberOfConstraints, previousStartIndex + 0, getCoMVelocityFirstCoefficient(omega, previousDuration));
-      coefficientConstraintMultipliers.set(numberOfConstraints, previousStartIndex + 1, getCoMVelocitySecondCoefficient(omega, previousDuration));
-      coefficientConstraintMultipliers.set(numberOfConstraints, previousStartIndex + 2, getCoMVelocityThirdCoefficient(previousDuration));
-      coefficientConstraintMultipliers.set(numberOfConstraints, previousStartIndex + 3, getCoMVelocityFourthCoefficient(previousDuration));
-      coefficientConstraintMultipliers.set(numberOfConstraints, previousStartIndex + 4, getCoMVelocityFifthCoefficient());
-      coefficientConstraintMultipliers.set(numberOfConstraints, previousStartIndex + 5, getCoMVelocitySixthCoefficient());
-      coefficientConstraintMultipliers.set(numberOfConstraints, nextStartIndex + 0, -getCoMVelocityFirstCoefficient(omega, 0.0));
-      coefficientConstraintMultipliers.set(numberOfConstraints, nextStartIndex + 1, -getCoMVelocitySecondCoefficient(omega, 0.0));
-      coefficientConstraintMultipliers.set(numberOfConstraints, nextStartIndex + 2, -getCoMVelocityThirdCoefficient(0.0));
-      coefficientConstraintMultipliers.set(numberOfConstraints, nextStartIndex + 3, -getCoMVelocityFourthCoefficient(0.0));
-      coefficientConstraintMultipliers.set(numberOfConstraints, nextStartIndex + 4, -getCoMVelocityFifthCoefficient());
-      coefficientConstraintMultipliers.set(numberOfConstraints, nextStartIndex + 5, -getCoMVelocitySixthCoefficient());
+      double previousDuration = contactSequence.get(previousSequence).getTimeInterval().getDuration();
+      CoMTrajectoryPlannerTools.addCoMVelocityContinuityConstraint(previousSequence, nextSequence, numberOfConstraints, omega.getValue(), previousDuration,
+                                                                   coefficientConstraintMultipliers);
 
       numberOfConstraints++;
    }
@@ -786,7 +724,7 @@ public class CoMTrajectoryOptimizationPlanner implements CoMTrajectoryPlannerInt
       else
       {
          constrainCoMAccelerationToGravity(sequenceId, 0.0);
-         constraintCoMJerkToZero(sequenceId, 0.0);
+         constrainCoMJerkToZero(sequenceId, 0.0);
       }
    }
 
@@ -810,7 +748,7 @@ public class CoMTrajectoryOptimizationPlanner implements CoMTrajectoryPlannerInt
       else
       {
          constrainCoMAccelerationToGravity(sequenceId, duration);
-         constraintCoMJerkToZero(sequenceId, duration);
+         constrainCoMJerkToZero(sequenceId, duration);
       }
    }
 
@@ -830,24 +768,8 @@ public class CoMTrajectoryOptimizationPlanner implements CoMTrajectoryPlannerInt
     */
    private void constrainVRPPosition(int sequenceId, int vrpWaypointPositionIndex, double time, FramePoint3DReadOnly desiredVRPPosition)
    {
-      double omega = this.omega.getValue();
-
-      int startIndex = indexHandler.getContactSequenceStartIndex(sequenceId);
-
-      desiredVRPPosition.checkReferenceFrameMatch(worldFrame);
-
-      coefficientConstraintMultipliers.set(numberOfConstraints, startIndex + 0, getVRPPositionFirstCoefficient());
-      coefficientConstraintMultipliers.set(numberOfConstraints, startIndex + 1, getVRPPositionSecondCoefficient());
-      coefficientConstraintMultipliers.set(numberOfConstraints, startIndex + 2, getVRPPositionThirdCoefficient(omega, time));
-      coefficientConstraintMultipliers.set(numberOfConstraints, startIndex + 3, getVRPPositionFourthCoefficient(omega, time));
-      coefficientConstraintMultipliers.set(numberOfConstraints, startIndex + 4, getVRPPositionFifthCoefficient(time));
-      coefficientConstraintMultipliers.set(numberOfConstraints, startIndex + 5, getVRPPositionSixthCoefficient());
-
-      vrpWaypointJacobian.set(numberOfConstraints, vrpWaypointPositionIndex, 1.0);
-
-      vrpXWaypoints.set(vrpWaypointPositionIndex, 0, desiredVRPPosition.getX());
-      vrpYWaypoints.set(vrpWaypointPositionIndex, 0, desiredVRPPosition.getY());
-      vrpZWaypoints.set(vrpWaypointPositionIndex, 0, desiredVRPPosition.getZ());
+      CoMTrajectoryPlannerTools.addVRPPositionConstraint(sequenceId, numberOfConstraints, vrpWaypointPositionIndex, time, omega.getValue(), desiredVRPPosition,
+                                                         coefficientConstraintMultipliers, vrpXWaypoints, vrpYWaypoints, vrpZWaypoints, vrpWaypointJacobian);
 
       numberOfConstraints++;
    }
@@ -930,18 +852,9 @@ public class CoMTrajectoryOptimizationPlanner implements CoMTrajectoryPlannerInt
     * @param sequenceId segment of interest, i in the above equations.
     * @param time time for the constraint, t<sub>i</sub> in the above equations.
     */
-   private void constraintCoMJerkToZero(int sequenceId, double time)
+   private void constrainCoMJerkToZero(int sequenceId, double time)
    {
-      double omega = this.omega.getValue();
-
-      int startIndex = indexHandler.getContactSequenceStartIndex(sequenceId);
-
-      coefficientConstraintMultipliers.set(numberOfConstraints, startIndex + 0, getCoMJerkFirstCoefficient(omega, time));
-      coefficientConstraintMultipliers.set(numberOfConstraints, startIndex + 1, getCoMJerkSecondCoefficient(omega, time));
-      coefficientConstraintMultipliers.set(numberOfConstraints, startIndex + 2, getCoMJerkThirdCoefficient());
-      coefficientConstraintMultipliers.set(numberOfConstraints, startIndex + 3, getCoMJerkFourthCoefficient());
-      coefficientConstraintMultipliers.set(numberOfConstraints, startIndex + 4, getCoMJerkFifthCoefficient());
-      coefficientConstraintMultipliers.set(numberOfConstraints, startIndex + 5, getCoMJerkSixthCoefficient());
+      CoMTrajectoryPlannerTools.constrainCoMJerkToZero(time, omega.getValue(), sequenceId, numberOfConstraints, coefficientConstraintMultipliers);
 
       numberOfConstraints++;
    }

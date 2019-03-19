@@ -15,16 +15,13 @@ public class CoMTrajectoryPlannerIndexHandler
 
    private int size;
    private int numberOfVRPWaypoints;
-   private final TIntArrayList startIndices = new TIntArrayList();
    private final TIntIntHashMap vrpWaypointIndices = new TIntIntHashMap();
 
    public void update(List<? extends ContactStateProvider> contactSequence)
    {
-      startIndices.clear();
       vrpWaypointIndices.clear();
       size = 0;
       numberOfVRPWaypoints = 0;
-      startIndices.add(size);
       if (contactSequence.get(0).getContactState() == ContactState.IN_CONTACT)
       {
          vrpWaypointIndices.put(0, numberOfVRPWaypoints);
@@ -33,7 +30,6 @@ public class CoMTrajectoryPlannerIndexHandler
       size += sequenceSize;
       for (int sequenceId = 1; sequenceId < contactSequence.size(); sequenceId++)
       {
-         startIndices.add(size);
          if (contactSequence.get(sequenceId).getContactState() == ContactState.IN_CONTACT)
          {
             vrpWaypointIndices.put(sequenceId, numberOfVRPWaypoints);
@@ -55,7 +51,7 @@ public class CoMTrajectoryPlannerIndexHandler
 
    public int getContactSequenceStartIndex(int sequenceNumber)
    {
-      return startIndices.get(sequenceNumber);
+      return 6 * sequenceNumber;
    }
 
    public int getVRPWaypointStartPositionIndex(int sequenceNumber)
