@@ -651,7 +651,6 @@ public class CoMTrajectoryOptimizationPlanner implements CoMTrajectoryPlannerInt
    {
       CoMTrajectoryPlannerTools.addDCMPositionConstraint(sequenceId, numberOfConstraints, time, omega.getValue(), desiredDCMPosition,
                                                          coefficientConstraintMultipliers, xConstants, yConstants, zConstants);
-
       numberOfConstraints++;
    }
 
@@ -675,7 +674,6 @@ public class CoMTrajectoryOptimizationPlanner implements CoMTrajectoryPlannerInt
       double previousDuration = contactSequence.get(previousSequence).getTimeInterval().getDuration();
       CoMTrajectoryPlannerTools.addCoMPositionContinuityConstraint(previousSequence, nextSequence, numberOfConstraints, omega.getValue(), previousDuration,
                                                                    coefficientConstraintMultipliers);
-
       numberOfConstraints++;
    }
 
@@ -699,7 +697,6 @@ public class CoMTrajectoryOptimizationPlanner implements CoMTrajectoryPlannerInt
       double previousDuration = contactSequence.get(previousSequence).getTimeInterval().getDuration();
       CoMTrajectoryPlannerTools.addCoMVelocityContinuityConstraint(previousSequence, nextSequence, numberOfConstraints, omega.getValue(), previousDuration,
                                                                    coefficientConstraintMultipliers);
-
       numberOfConstraints++;
    }
 
@@ -770,7 +767,6 @@ public class CoMTrajectoryOptimizationPlanner implements CoMTrajectoryPlannerInt
    {
       CoMTrajectoryPlannerTools.addVRPPositionConstraint(sequenceId, numberOfConstraints, vrpWaypointPositionIndex, time, omega.getValue(), desiredVRPPosition,
                                                          coefficientConstraintMultipliers, vrpXWaypoints, vrpYWaypoints, vrpZWaypoints, vrpWaypointJacobian);
-
       numberOfConstraints++;
    }
 
@@ -790,25 +786,8 @@ public class CoMTrajectoryOptimizationPlanner implements CoMTrajectoryPlannerInt
     */
    private void constrainVRPVelocity(int sequenceId, int vrpWaypointVelocityIndex, double time, FrameVector3DReadOnly desiredVRPVelocity)
    {
-      double omega = this.omega.getValue();
-
-      int startIndex = indexHandler.getContactSequenceStartIndex(sequenceId);
-
-      desiredVRPVelocity.checkReferenceFrameMatch(worldFrame);
-
-      coefficientConstraintMultipliers.set(numberOfConstraints, startIndex + 0, getVRPVelocityFirstCoefficient());
-      coefficientConstraintMultipliers.set(numberOfConstraints, startIndex + 1, getVRPVelocitySecondCoefficient());
-      coefficientConstraintMultipliers.set(numberOfConstraints, startIndex + 2, getVRPVelocityThirdCoefficient(omega, time));
-      coefficientConstraintMultipliers.set(numberOfConstraints, startIndex + 3, getVRPVelocityFourthCoefficient(time));
-      coefficientConstraintMultipliers.set(numberOfConstraints, startIndex + 4, getVRPVelocityFifthCoefficient());
-      coefficientConstraintMultipliers.set(numberOfConstraints, startIndex + 5, getVRPVelocitySixthCoefficient());
-
-      vrpWaypointJacobian.set(numberOfConstraints, vrpWaypointVelocityIndex, 1.0);
-
-      vrpXWaypoints.set(vrpWaypointVelocityIndex, 0, desiredVRPVelocity.getX());
-      vrpYWaypoints.set(vrpWaypointVelocityIndex, 0, desiredVRPVelocity.getY());
-      vrpZWaypoints.set(vrpWaypointVelocityIndex, 0, desiredVRPVelocity.getZ());
-
+      CoMTrajectoryPlannerTools.addVRPVelocityConstraint(sequenceId, numberOfConstraints, vrpWaypointVelocityIndex, omega.getValue(), time, desiredVRPVelocity,
+                                                         coefficientConstraintMultipliers, vrpXWaypoints, vrpYWaypoints, vrpZWaypoints, vrpWaypointJacobian);
       numberOfConstraints++;
    }
 
@@ -825,19 +804,8 @@ public class CoMTrajectoryOptimizationPlanner implements CoMTrajectoryPlannerInt
     */
    private void constrainCoMAccelerationToGravity(int sequenceId, double time)
    {
-      double omega = this.omega.getValue();
-
-      int startIndex = indexHandler.getContactSequenceStartIndex(sequenceId);
-
-      coefficientConstraintMultipliers.set(numberOfConstraints, startIndex + 0, getCoMAccelerationFirstCoefficient(omega, time));
-      coefficientConstraintMultipliers.set(numberOfConstraints, startIndex + 1, getCoMAccelerationSecondCoefficient(omega, time));
-      coefficientConstraintMultipliers.set(numberOfConstraints, startIndex + 2, getCoMAccelerationThirdCoefficient(time));
-      coefficientConstraintMultipliers.set(numberOfConstraints, startIndex + 3, getCoMAccelerationFourthCoefficient());
-      coefficientConstraintMultipliers.set(numberOfConstraints, startIndex + 4, getCoMAccelerationFifthCoefficient());
-      coefficientConstraintMultipliers.set(numberOfConstraints, startIndex + 5, getCoMAccelerationSixthCoefficient());
-
-      zConstants.set(numberOfConstraints, 0, -Math.abs(gravityZ));
-
+      CoMTrajectoryPlannerTools.constrainCoMAccelerationToGravity(sequenceId, numberOfConstraints, omega.getValue(), time, gravityZ,
+                                                                  coefficientConstraintMultipliers, zConstraintObjective);
       numberOfConstraints++;
    }
 
@@ -855,7 +823,6 @@ public class CoMTrajectoryOptimizationPlanner implements CoMTrajectoryPlannerInt
    private void constrainCoMJerkToZero(int sequenceId, double time)
    {
       CoMTrajectoryPlannerTools.constrainCoMJerkToZero(time, omega.getValue(), sequenceId, numberOfConstraints, coefficientConstraintMultipliers);
-
       numberOfConstraints++;
    }
 }
