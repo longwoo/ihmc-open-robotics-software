@@ -28,6 +28,8 @@ public class CoMTrajectoryPlannerVisualizer
    //   private static final double nominalHeight = 0.75;
    private static final double nominalHeight = 9.81 / 9;
 
+   private static final boolean useOptimizer = true;
+
    private static final double initialTransferDuration = 1.0;
    private static final double finalTransferDuration = 1.0;
    private static final double settlingTime = 1.0;
@@ -57,7 +59,7 @@ public class CoMTrajectoryPlannerVisualizer
    private final YoDouble yoTime;
    private final YoDouble timeInPhase;
 
-   private final CoMTrajectoryOptimizationPlanner planner;
+   private final CoMTrajectoryPlannerInterface planner;
 
    private List<ContactStateProvider> contactStates;
 
@@ -101,7 +103,14 @@ public class CoMTrajectoryPlannerVisualizer
       timeInPhase = new YoDouble("timeInPhase", registry);
 
       contactStates = createContacts();
-      planner = new CoMTrajectoryOptimizationPlanner(omega, gravity, nominalHeight, registry, graphicsListRegistry);
+      if (useOptimizer)
+      {
+         planner = new CoMTrajectoryOptimizationPlanner(omega, gravity, nominalHeight, registry, graphicsListRegistry);
+      }
+      else
+      {
+         planner = new CoMTrajectoryPlanner(omega, gravity, nominalHeight, registry, graphicsListRegistry);
+      }
 
       YoGraphicPosition dcmViz = new YoGraphicPosition("desiredDCM", desiredDCMPosition, 0.02, YoAppearance.Yellow(),
                                                        YoGraphicPosition.GraphicType.BALL_WITH_CROSS);
@@ -123,7 +132,7 @@ public class CoMTrajectoryPlannerVisualizer
       scs.setDT(simDt, 1);
       scs.addYoVariableRegistry(registry);
       scs.addYoGraphicsListRegistry(graphicsListRegistry);
-      scs.setPlaybackRealTimeRate(0.25);
+      scs.setPlaybackRealTimeRate(0.75);
       Graphics3DObject linkGraphics = new Graphics3DObject();
       linkGraphics.addCoordinateSystem(0.3);
       scs.addStaticLinkGraphics(linkGraphics);

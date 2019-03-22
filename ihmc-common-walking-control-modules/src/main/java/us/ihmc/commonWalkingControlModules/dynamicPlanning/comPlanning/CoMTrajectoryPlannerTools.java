@@ -1,16 +1,84 @@
 package us.ihmc.commonWalkingControlModules.dynamicPlanning.comPlanning;
 
 import org.ejml.data.DenseMatrix64F;
+import us.ihmc.commons.MathTools;
+import us.ihmc.commons.lists.RecyclingArrayList;
+import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.interfaces.FixedFramePoint3DBasics;
 import us.ihmc.euclid.referenceFrame.interfaces.FixedFrameVector3DBasics;
 import us.ihmc.euclid.referenceFrame.interfaces.FramePoint3DReadOnly;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 
+import java.util.List;
+
 public class CoMTrajectoryPlannerTools
 {
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
    private static final double sufficientlyLarge = 1.0e10;
+
+   static void computeVRPWaypoints(double nominalCoMHeight, double gravityZ, double omega, FrameVector3DReadOnly currentCoMVelocity,
+                                   List<? extends ContactStateProvider> contactSequence, RecyclingArrayList<FramePoint3D> startVRPPositionsToPack,
+                                   RecyclingArrayList<FramePoint3D> endVRPPositionsToPack)
+   {
+      startVRPPositionsToPack.clear();
+      endVRPPositionsToPack.clear();
+
+      double initialHeightVelocity = currentCoMVelocity.getZ();
+      double finalHeightVelocity;
+
+      for (int i = 0; i < contactSequence.size(); i++)
+      {
+         ContactStateProvider contactStateProvider = contactSequence.get(i);
+         boolean finalContact = i == contactSequence.size() - 1;
+         ContactStateProvider nextContactStateProvider = null;
+         if (!finalContact)
+            nextContactStateProvider = contactSequence.get(i + 1);
+
+
+         double duration = contactStateProvider.getTimeInterval().getDuration();
+         if (!contactStateProvider.getContactState().isLoadBearing())
+         {
+            finalHeightVelocity = initialHeightVelocity - gravityZ * duration;
+         }
+         else
+         {
+            if (!finalContact && !nextContactStateProvider.getContactState().isLoadBearing())
+            { // next is a jump, current one is load bearing
+               ContactStateProvider nextNextContactStateProvider = contactSequence.get(i + 2);
+               double heightBeforeJump = contactStateProvider.getCopEndPosition().getZ();
+               double finalHeightAfterJump = nextNextContactStateProvider.getCopStartPosition().getZ();
+
+               double heightChangeWhenJumping = finalHeightAfterJump - heightBeforeJump;
+               double durationOfJump = nextContactStateProvider.getTimeInterval().getDuration();
+
+               /* delta z = v0 T - 0.5 g T^2
+                  * v0 =  delta z / T + 0.5 g T**/
+               finalHeightVelocity = heightChangeWhenJumping / durationOfJump + 0.5 * gravityZ * durationOfJump;
+            }
+            else
+            { // next is is load bearing, current is load bearing.
+               finalHeightVelocity = 0.0;
+            }
+         }
+
+         FramePoint3D start = startVRPPositionsToPack.add();
+         FramePoint3D end = endVRPPositionsToPack.add();
+
+         start.set(contactStateProvider.getCopStartPosition());
+         start.addZ(nominalCoMHeight);
+         end.set(contactStateProvider.getCopEndPosition());
+         end.addZ(nominalCoMHeight);
+
+         // offset the height VRP waypoint based on the desired velocity change
+         double heightVelocityChange = finalHeightVelocity - initialHeightVelocity;
+         double offset = heightVelocityChange / (MathTools.square(omega) * duration);
+         start.subZ(offset);
+         end.subZ(offset);
+
+         initialHeightVelocity = finalHeightVelocity;
+      }
+   }
 
    /**
     * <p> Sets the continuity constraint on the initial CoM position. This DOES result in a initial discontinuity on the desired DCM location,

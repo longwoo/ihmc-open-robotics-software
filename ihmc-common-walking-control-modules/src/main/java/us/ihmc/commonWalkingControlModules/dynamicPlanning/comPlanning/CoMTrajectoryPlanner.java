@@ -56,7 +56,6 @@ public class CoMTrajectoryPlanner implements CoMTrajectoryPlannerInterface
    private static final boolean VISUALIZE = true;
    private static final double POINT_SIZE = 0.005;
 
-
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
 
    private final DenseMatrix64F coefficientMultipliers = new DenseMatrix64F(0, 0);
@@ -182,45 +181,21 @@ public class CoMTrajectoryPlanner implements CoMTrajectoryPlannerInterface
 
       resetMatrices();
 
-      int numberOfPhases = contactSequence.size();
-      int numberOfTransitions = numberOfPhases - 1;
+      CoMTrajectoryPlannerTools.computeVRPWaypoints(nominalCoMHeight, gravityZ, omega.getValue(), currentCoMVelocity, contactSequence, startVRPPositions,
+                                                    endVRPPositions);
 
-      computeVRPWaypointsFromContactSequence(contactSequence);
+      solveForCoefficientConstraintMatrix(contactSequence);
 
-      numberOfConstraints = 0;
 
-      // set initial constraint
-      setCoMPositionConstraint(currentCoMPosition);
-      setDynamicsInitialConstraint(contactSequence, 0);
-
-      // add transition continuity constraints
-      for (int transition = 0; transition < numberOfTransitions; transition++)
-      {
-         int previousSequence = transition;
-         int nextSequence = transition + 1;
-         setCoMPositionContinuity(contactSequence, previousSequence, nextSequence);
-         setCoMVelocityContinuity(contactSequence, previousSequence, nextSequence);
-         setDynamicsFinalConstraint(contactSequence, previousSequence);
-         setDynamicsInitialConstraint(contactSequence, nextSequence);
-      }
-
-      // set terminal constraint
-      ContactStateProvider lastContactPhase = contactSequence.get(numberOfPhases - 1);
-      finalDCMPosition.set(lastContactPhase.getCopEndPosition());
-      finalDCMPosition.addZ(nominalCoMHeight);
-      setDCMPositionConstraint(numberOfPhases - 1, lastContactPhase.getTimeInterval().getDuration(), finalDCMPosition);
-      setDynamicsFinalConstraint(contactSequence, numberOfPhases - 1);
-
-      // map from VRP waypoints to the value
       xEquivalents.set(xConstants);
       yEquivalents.set(yConstants);
       zEquivalents.set(zConstants);
+
+
       CommonOps.multAdd(vrpWaypointJacobian, vrpXWaypoints, xEquivalents);
       CommonOps.multAdd(vrpWaypointJacobian, vrpYWaypoints, yEquivalents);
       CommonOps.multAdd(vrpWaypointJacobian, vrpZWaypoints, zEquivalents);
 
-      // solve for coefficients
-      NativeCommonOps.invert(coefficientMultipliers, coefficientMultipliersInv);
       CommonOps.mult(coefficientMultipliersInv, xEquivalents, xCoefficientVector);
       CommonOps.mult(coefficientMultipliersInv, yEquivalents, yCoefficientVector);
       CommonOps.mult(coefficientMultipliersInv, zEquivalents, zCoefficientVector);
@@ -257,68 +232,43 @@ public class CoMTrajectoryPlanner implements CoMTrajectoryPlannerInterface
       yoSixthCoefficient.setY(yCoefficientVector.get(sixthCoefficientIndex));
       yoSixthCoefficient.setZ(zCoefficientVector.get(sixthCoefficientIndex));
 
+      int numberOfPhases = contactSequence.size();
       updateCornerPoints(numberOfPhases);
    }
 
-   private void computeVRPWaypointsFromContactSequence(List<? extends ContactStateProvider> contactSequence)
+   private void solveForCoefficientConstraintMatrix(List<? extends ContactStateProvider> contactSequence)
    {
-      startVRPPositions.clear();
-      endVRPPositions.clear();
+      int numberOfPhases = contactSequence.size();
+      int numberOfTransitions = numberOfPhases - 1;
 
-      double initialHeightVelocity = currentCoMVelocity.getZ();
-      double finalHeightVelocity;
+      numberOfConstraints = 0;
 
-      for (int i = 0; i < contactSequence.size(); i++)
+      // set initial constraint
+      setCoMPositionConstraint(currentCoMPosition);
+      setDynamicsInitialConstraint(contactSequence, 0);
+
+      // add transition continuity constraints
+      for (int transition = 0; transition < numberOfTransitions; transition++)
       {
-         ContactStateProvider contactStateProvider = contactSequence.get(i);
-         boolean finalContact = i == contactSequence.size() - 1;
-         ContactStateProvider nextContactStateProvider = null;
-         if (!finalContact)
-            nextContactStateProvider = contactSequence.get(i + 1);
-
-         double duration = contactStateProvider.getTimeInterval().getDuration();
-         if (!contactStateProvider.getContactState().isLoadBearing())
-         {
-            finalHeightVelocity = initialHeightVelocity - gravityZ * duration;
-         }
-         else
-         {
-            if (!finalContact && !nextContactStateProvider.getContactState().isLoadBearing())
-            { // next is a jump, current one is load bearing
-               ContactStateProvider nextNextContactStateProvider = contactSequence.get(i + 2);
-               double heightBeforeJump = contactStateProvider.getCopEndPosition().getZ();
-               double finalHeightAfterJump = nextNextContactStateProvider.getCopStartPosition().getZ();
-
-               double heightChangeWhenJumping = finalHeightAfterJump - heightBeforeJump;
-               double durationOfJump = nextContactStateProvider.getTimeInterval().getDuration();
-
-               /* delta z = v0 T - 0.5 g T^2
-                * v0 =  delta z / T + 0.5 g T**/
-               finalHeightVelocity = heightChangeWhenJumping / durationOfJump + 0.5 * gravityZ * durationOfJump;
-            }
-            else
-            { // next is is load bearing, current is load bearing.
-               finalHeightVelocity = 0.0;
-            }
-         }
-
-         FramePoint3D start = startVRPPositions.add();
-         FramePoint3D end = endVRPPositions.add();
-
-         start.set(contactStateProvider.getCopStartPosition());
-         start.addZ(nominalCoMHeight);
-         end.set(contactStateProvider.getCopEndPosition());
-         end.addZ(nominalCoMHeight);
-
-         // offset the height VRP waypoint based on the desired velocity change
-         double heightVelocityChange = finalHeightVelocity - initialHeightVelocity;
-         double offset = heightVelocityChange / (MathTools.square(omega.getValue()) * duration);
-         start.subZ(offset);
-         end.subZ(offset);
-
-         initialHeightVelocity = finalHeightVelocity;
+         int previousSequence = transition;
+         int nextSequence = transition + 1;
+         setCoMPositionContinuity(contactSequence, previousSequence, nextSequence);
+         setCoMVelocityContinuity(contactSequence, previousSequence, nextSequence);
+         setDynamicsFinalConstraint(contactSequence, previousSequence);
+         setDynamicsInitialConstraint(contactSequence, nextSequence);
       }
+
+      // set terminal constraint
+      ContactStateProvider lastContactPhase = contactSequence.get(numberOfPhases - 1);
+      finalDCMPosition.set(lastContactPhase.getCopEndPosition());
+      finalDCMPosition.addZ(nominalCoMHeight);
+      setDCMPositionConstraint(numberOfPhases - 1, lastContactPhase.getTimeInterval().getDuration(), finalDCMPosition);
+      setDynamicsFinalConstraint(contactSequence, numberOfPhases - 1);
+
+      NativeCommonOps.invert(coefficientMultipliers, coefficientMultipliersInv);
    }
+
+
 
    private final FramePoint3D firstCoefficient = new FramePoint3D();
    private final FramePoint3D secondCoefficient = new FramePoint3D();

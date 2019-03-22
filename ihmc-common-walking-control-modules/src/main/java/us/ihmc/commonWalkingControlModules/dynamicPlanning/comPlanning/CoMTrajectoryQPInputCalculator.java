@@ -82,22 +82,22 @@ public class CoMTrajectoryQPInputCalculator
 
       int startIndex = 6 * segmentNumber;
 
-      matrixToPack.set(startIndex + 0, startIndex + 0, costWeight * 0.5 * omega3 * (e2OmegaT - 1.0));
-      matrixToPack.set(startIndex + 0, startIndex + 1, costWeight * omega4 * segmentDuration);
-      matrixToPack.set(startIndex + 0, startIndex + 2, costWeight * 6.0 * (eOmegaT * (omegaT - 1) + 1));
-      matrixToPack.set(startIndex + 0, startIndex + 3, costWeight * 2.0 * omega * (eOmegaT - 1.0));
+      matrixToPack.set(startIndex,     startIndex,     costWeight * 0.5 * omega3 * (e2OmegaT - 1.0));
+      matrixToPack.set(startIndex,     startIndex + 1, costWeight * omega4 * segmentDuration);
+      matrixToPack.set(startIndex,     startIndex + 2, costWeight * 6.0 * (eOmegaT * (omegaT - 1) + 1));
+      matrixToPack.set(startIndex,     startIndex + 3, costWeight * 2.0 * omega * (eOmegaT - 1.0));
 
-      matrixToPack.set(startIndex + 1, startIndex + 0, matrixToPack.get(startIndex + 0, startIndex + 1));
+      matrixToPack.set(startIndex + 1, startIndex,     matrixToPack.get(startIndex, startIndex + 1));
       matrixToPack.set(startIndex + 1, startIndex + 1, costWeight * -0.5 * omega3 * (e2OmegaNegT - 1.0));
       matrixToPack.set(startIndex + 1, startIndex + 2, costWeight * -6.0 * (eOmegaNegT * (omegaT + 1) - 1));
       matrixToPack.set(startIndex + 1, startIndex + 3, costWeight * -2.0 * omega * (eOmegaNegT - 1.0));
 
-      matrixToPack.set(startIndex + 2, startIndex + 0, matrixToPack.get(startIndex + 0, startIndex + 2));
+      matrixToPack.set(startIndex + 2, startIndex,     matrixToPack.get(startIndex,     startIndex + 2));
       matrixToPack.set(startIndex + 2, startIndex + 1, matrixToPack.get(startIndex + 1, startIndex + 2));
       matrixToPack.set(startIndex + 2, startIndex + 2, costWeight * 12.0 * MathTools.pow(segmentDuration, 3));
       matrixToPack.set(startIndex + 2, startIndex + 3, costWeight * 6.0 * MathTools.square(segmentDuration));
 
-      matrixToPack.set(startIndex + 3, startIndex + 0, matrixToPack.get(startIndex + 0, startIndex + 3));
+      matrixToPack.set(startIndex + 3, startIndex,     matrixToPack.get(startIndex,     startIndex + 3));
       matrixToPack.set(startIndex + 3, startIndex + 1, matrixToPack.get(startIndex + 1, startIndex + 3));
       matrixToPack.set(startIndex + 3, startIndex + 2, matrixToPack.get(startIndex + 2, startIndex + 3));
       matrixToPack.set(startIndex + 3, startIndex + 3, costWeight * 4.0 * segmentDuration);
