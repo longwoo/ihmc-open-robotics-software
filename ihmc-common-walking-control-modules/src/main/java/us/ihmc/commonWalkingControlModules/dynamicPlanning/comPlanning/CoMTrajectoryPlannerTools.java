@@ -112,12 +112,12 @@ public class CoMTrajectoryPlannerTools
       time = Math.min(time, sufficientlyLongTime);
 
       int colStart = 6 * sequenceId;
-      constraintMatrixToPack.set(rowStart, colStart,     getCoMPositionFirstCoefficient(omega, time));
-      constraintMatrixToPack.set(rowStart, colStart + 1, getCoMPositionSecondCoefficient(omega, time));
-      constraintMatrixToPack.set(rowStart, colStart + 2, getCoMPositionThirdCoefficient(time));
-      constraintMatrixToPack.set(rowStart, colStart + 3, getCoMPositionFourthCoefficient(time));
-      constraintMatrixToPack.set(rowStart, colStart + 4, getCoMPositionFifthCoefficient(time));
-      constraintMatrixToPack.set(rowStart, colStart + 5, getCoMPositionSixthCoefficient());
+      constraintMatrixToPack.set(rowStart, colStart, getCoMPositionFirstCoefficientTimeFunction(omega, time));
+      constraintMatrixToPack.set(rowStart, colStart + 1, getCoMPositionSecondCoefficientTimeFunction(omega, time));
+      constraintMatrixToPack.set(rowStart, colStart + 2, getCoMPositionThirdCoefficientTimeFunction(time));
+      constraintMatrixToPack.set(rowStart, colStart + 3, getCoMPositionFourthCoefficientTimeFunction(time));
+      constraintMatrixToPack.set(rowStart, colStart + 4, getCoMPositionFifthCoefficientTimeFunction(time));
+      constraintMatrixToPack.set(rowStart, colStart + 5, getCoMPositionSixthCoefficientTimeFunction());
 
       xObjectiveMatrixToPack.add(rowStart, 0, centerOfMassLocationForConstraint.getX());
       yObjectiveMatrixToPack.add(rowStart, 0, centerOfMassLocationForConstraint.getY());
@@ -158,12 +158,12 @@ public class CoMTrajectoryPlannerTools
       int startIndex = 6 * sequenceId;
 
       // add constraints on terminal DCM position
-      constraintMatrixToPack.set(rowStart, startIndex,     getDCMPositionFirstCoefficient(omega, time));
-      constraintMatrixToPack.set(rowStart, startIndex + 1, getDCMPositionSecondCoefficient());
-      constraintMatrixToPack.set(rowStart, startIndex + 2, getDCMPositionThirdCoefficient(omega, time));
-      constraintMatrixToPack.set(rowStart, startIndex + 3, getDCMPositionFourthCoefficient(omega, time));
-      constraintMatrixToPack.set(rowStart, startIndex + 4, getDCMPositionFifthCoefficient(omega, time));
-      constraintMatrixToPack.set(rowStart, startIndex + 5, getDCMPositionSixthCoefficient());
+      constraintMatrixToPack.set(rowStart, startIndex, getDCMPositionFirstCoefficientTimeFunction(omega, time));
+      constraintMatrixToPack.set(rowStart, startIndex + 1, getDCMPositionSecondCoefficientTimeFunction());
+      constraintMatrixToPack.set(rowStart, startIndex + 2, getDCMPositionThirdCoefficientTimeFunction(omega, time));
+      constraintMatrixToPack.set(rowStart, startIndex + 3, getDCMPositionFourthCoefficientTimeFunction(omega, time));
+      constraintMatrixToPack.set(rowStart, startIndex + 4, getDCMPositionFifthCoefficientTimeFunction(omega, time));
+      constraintMatrixToPack.set(rowStart, startIndex + 5, getDCMPositionSixthCoefficientTimeFunction());
 
       xObjectiveMatrixToPack.add(rowStart, 0, desiredDCMPosition.getX());
       yObjectiveMatrixToPack.add(rowStart, 0, desiredDCMPosition.getY());
@@ -194,12 +194,12 @@ public class CoMTrajectoryPlannerTools
 
       desiredVRPPosition.checkReferenceFrameMatch(worldFrame);
 
-      constraintMatrixToPack.set(constraintNumber, startIndex + 0, CoMTrajectoryPlannerTools.getVRPPositionFirstCoefficient());
-      constraintMatrixToPack.set(constraintNumber, startIndex + 1, CoMTrajectoryPlannerTools.getVRPPositionSecondCoefficient());
-      constraintMatrixToPack.set(constraintNumber, startIndex + 2, CoMTrajectoryPlannerTools.getVRPPositionThirdCoefficient(omega, time));
-      constraintMatrixToPack.set(constraintNumber, startIndex + 3, CoMTrajectoryPlannerTools.getVRPPositionFourthCoefficient(omega, time));
-      constraintMatrixToPack.set(constraintNumber, startIndex + 4, CoMTrajectoryPlannerTools.getVRPPositionFifthCoefficient(time));
-      constraintMatrixToPack.set(constraintNumber, startIndex + 5, CoMTrajectoryPlannerTools.getVRPPositionSixthCoefficient());
+      constraintMatrixToPack.set(constraintNumber, startIndex + 0, CoMTrajectoryPlannerTools.getVRPPositionFirstCoefficientTimeFunction());
+      constraintMatrixToPack.set(constraintNumber, startIndex + 1, CoMTrajectoryPlannerTools.getVRPPositionSecondCoefficientTimeFunction());
+      constraintMatrixToPack.set(constraintNumber, startIndex + 2, CoMTrajectoryPlannerTools.getVRPPositionThirdCoefficientTimeFunction(omega, time));
+      constraintMatrixToPack.set(constraintNumber, startIndex + 3, CoMTrajectoryPlannerTools.getVRPPositionFourthCoefficientTimeFunction(omega, time));
+      constraintMatrixToPack.set(constraintNumber, startIndex + 4, CoMTrajectoryPlannerTools.getVRPPositionFifthCoefficientTimeFunction(time));
+      constraintMatrixToPack.set(constraintNumber, startIndex + 5, CoMTrajectoryPlannerTools.getVRPPositionSixthCoefficientTimeFunction());
 
       vrpWaypointJacobianToPack.set(constraintNumber, vrpWaypointPositionIndex, 1.0);
 
@@ -230,12 +230,12 @@ public class CoMTrajectoryPlannerTools
 
       desiredVRPVelocity.checkReferenceFrameMatch(worldFrame);
 
-      constraintMatrixToPack.set(constraintRow, startIndex + 0, CoMTrajectoryPlannerTools.getVRPVelocityFirstCoefficient());
-      constraintMatrixToPack.set(constraintRow, startIndex + 1, CoMTrajectoryPlannerTools.getVRPVelocitySecondCoefficient());
-      constraintMatrixToPack.set(constraintRow, startIndex + 2, CoMTrajectoryPlannerTools.getVRPVelocityThirdCoefficient(omega, time));
-      constraintMatrixToPack.set(constraintRow, startIndex + 3, CoMTrajectoryPlannerTools.getVRPVelocityFourthCoefficient(time));
-      constraintMatrixToPack.set(constraintRow, startIndex + 4, CoMTrajectoryPlannerTools.getVRPVelocityFifthCoefficient());
-      constraintMatrixToPack.set(constraintRow, startIndex + 5, CoMTrajectoryPlannerTools.getVRPVelocitySixthCoefficient());
+      constraintMatrixToPack.set(constraintRow, startIndex + 0, CoMTrajectoryPlannerTools.getVRPVelocityFirstCoefficientTimeFunction());
+      constraintMatrixToPack.set(constraintRow, startIndex + 1, CoMTrajectoryPlannerTools.getVRPVelocitySecondCoefficientTimeFunction());
+      constraintMatrixToPack.set(constraintRow, startIndex + 2, CoMTrajectoryPlannerTools.getVRPVelocityThirdCoefficientTimeFunction(omega, time));
+      constraintMatrixToPack.set(constraintRow, startIndex + 3, CoMTrajectoryPlannerTools.getVRPVelocityFourthCoefficientTimeFunction(time));
+      constraintMatrixToPack.set(constraintRow, startIndex + 4, CoMTrajectoryPlannerTools.getVRPVelocityFifthCoefficientTimeFunction());
+      constraintMatrixToPack.set(constraintRow, startIndex + 5, CoMTrajectoryPlannerTools.getVRPVelocitySixthCoefficientTimeFunction());
 
       vrpWaypointJacobianToPack.set(constraintRow, vrpWaypointVelocityIndex, 1.0);
 
@@ -268,18 +268,18 @@ public class CoMTrajectoryPlannerTools
 
       previousDuration = Math.min(previousDuration, sufficientlyLongTime);
 
-      constraintMatrixToPack.set(constraintRow, previousStartIndex,      getCoMPositionFirstCoefficient(omega, previousDuration));
-      constraintMatrixToPack.set(constraintRow, previousStartIndex + 1,  getCoMPositionSecondCoefficient(omega, previousDuration));
-      constraintMatrixToPack.set(constraintRow, previousStartIndex + 2,  getCoMPositionThirdCoefficient(previousDuration));
-      constraintMatrixToPack.set(constraintRow, previousStartIndex + 3,  getCoMPositionFourthCoefficient(previousDuration));
-      constraintMatrixToPack.set(constraintRow, previousStartIndex + 4,  getCoMPositionFifthCoefficient(previousDuration));
-      constraintMatrixToPack.set(constraintRow, previousStartIndex + 5,  getCoMPositionSixthCoefficient());
-      constraintMatrixToPack.set(constraintRow, nextStartIndex,         -getCoMPositionFirstCoefficient(omega, 0.0));
-      constraintMatrixToPack.set(constraintRow, nextStartIndex + 1,     -getCoMPositionSecondCoefficient(omega, 0.0));
-      constraintMatrixToPack.set(constraintRow, nextStartIndex + 2,     -getCoMPositionThirdCoefficient(0.0));
-      constraintMatrixToPack.set(constraintRow, nextStartIndex + 3,     -getCoMPositionFourthCoefficient(0.0));
-      constraintMatrixToPack.set(constraintRow, nextStartIndex + 4,     -getCoMPositionFifthCoefficient(0.0));
-      constraintMatrixToPack.set(constraintRow, nextStartIndex + 5,     -getCoMPositionSixthCoefficient());
+      constraintMatrixToPack.set(constraintRow, previousStartIndex, getCoMPositionFirstCoefficientTimeFunction(omega, previousDuration));
+      constraintMatrixToPack.set(constraintRow, previousStartIndex + 1, getCoMPositionSecondCoefficientTimeFunction(omega, previousDuration));
+      constraintMatrixToPack.set(constraintRow, previousStartIndex + 2, getCoMPositionThirdCoefficientTimeFunction(previousDuration));
+      constraintMatrixToPack.set(constraintRow, previousStartIndex + 3, getCoMPositionFourthCoefficientTimeFunction(previousDuration));
+      constraintMatrixToPack.set(constraintRow, previousStartIndex + 4, getCoMPositionFifthCoefficientTimeFunction(previousDuration));
+      constraintMatrixToPack.set(constraintRow, previousStartIndex + 5, getCoMPositionSixthCoefficientTimeFunction());
+      constraintMatrixToPack.set(constraintRow, nextStartIndex,         -getCoMPositionFirstCoefficientTimeFunction(omega, 0.0));
+      constraintMatrixToPack.set(constraintRow, nextStartIndex + 1,     -getCoMPositionSecondCoefficientTimeFunction(omega, 0.0));
+      constraintMatrixToPack.set(constraintRow, nextStartIndex + 2,     -getCoMPositionThirdCoefficientTimeFunction(0.0));
+      constraintMatrixToPack.set(constraintRow, nextStartIndex + 3,     -getCoMPositionFourthCoefficientTimeFunction(0.0));
+      constraintMatrixToPack.set(constraintRow, nextStartIndex + 4,     -getCoMPositionFifthCoefficientTimeFunction(0.0));
+      constraintMatrixToPack.set(constraintRow, nextStartIndex + 5,     -getCoMPositionSixthCoefficientTimeFunction());
    }
 
    /**
@@ -306,18 +306,18 @@ public class CoMTrajectoryPlannerTools
 
       previousDuration = Math.min(previousDuration, sufficientlyLongTime);
 
-      constraintMatrixToPack.set(constraintRow, previousStartIndex,      getCoMVelocityFirstCoefficient(omega, previousDuration));
-      constraintMatrixToPack.set(constraintRow, previousStartIndex + 1,  getCoMVelocitySecondCoefficient(omega, previousDuration));
-      constraintMatrixToPack.set(constraintRow, previousStartIndex + 2,  getCoMVelocityThirdCoefficient(previousDuration));
-      constraintMatrixToPack.set(constraintRow, previousStartIndex + 3,  getCoMVelocityFourthCoefficient(previousDuration));
-      constraintMatrixToPack.set(constraintRow, previousStartIndex + 4,  getCoMVelocityFifthCoefficient());
-      constraintMatrixToPack.set(constraintRow, previousStartIndex + 5,  getCoMVelocitySixthCoefficient());
-      constraintMatrixToPack.set(constraintRow, nextStartIndex,         -getCoMVelocityFirstCoefficient(omega, 0.0));
-      constraintMatrixToPack.set(constraintRow, nextStartIndex + 1,     -getCoMVelocitySecondCoefficient(omega, 0.0));
-      constraintMatrixToPack.set(constraintRow, nextStartIndex + 2,     -getCoMVelocityThirdCoefficient(0.0));
-      constraintMatrixToPack.set(constraintRow, nextStartIndex + 3,     -getCoMVelocityFourthCoefficient(0.0));
-      constraintMatrixToPack.set(constraintRow, nextStartIndex + 4,     -getCoMVelocityFifthCoefficient());
-      constraintMatrixToPack.set(constraintRow, nextStartIndex + 5,     -getCoMVelocitySixthCoefficient());
+      constraintMatrixToPack.set(constraintRow, previousStartIndex, getCoMVelocityFirstCoefficientTimeFunction(omega, previousDuration));
+      constraintMatrixToPack.set(constraintRow, previousStartIndex + 1, getCoMVelocitySecondCoefficientTimeFunction(omega, previousDuration));
+      constraintMatrixToPack.set(constraintRow, previousStartIndex + 2, getCoMVelocityThirdCoefficientTimeFunction(previousDuration));
+      constraintMatrixToPack.set(constraintRow, previousStartIndex + 3, getCoMVelocityFourthCoefficientTimeFunction(previousDuration));
+      constraintMatrixToPack.set(constraintRow, previousStartIndex + 4, getCoMVelocityFifthCoefficientTimeFunction());
+      constraintMatrixToPack.set(constraintRow, previousStartIndex + 5, getCoMVelocitySixthCoefficientTimeFunction());
+      constraintMatrixToPack.set(constraintRow, nextStartIndex,         -getCoMVelocityFirstCoefficientTimeFunction(omega, 0.0));
+      constraintMatrixToPack.set(constraintRow, nextStartIndex + 1,     -getCoMVelocitySecondCoefficientTimeFunction(omega, 0.0));
+      constraintMatrixToPack.set(constraintRow, nextStartIndex + 2,     -getCoMVelocityThirdCoefficientTimeFunction(0.0));
+      constraintMatrixToPack.set(constraintRow, nextStartIndex + 3,     -getCoMVelocityFourthCoefficientTimeFunction(0.0));
+      constraintMatrixToPack.set(constraintRow, nextStartIndex + 4,     -getCoMVelocityFifthCoefficientTimeFunction());
+      constraintMatrixToPack.set(constraintRow, nextStartIndex + 5,     -getCoMVelocitySixthCoefficientTimeFunction());
    }
 
    /**
@@ -338,12 +338,12 @@ public class CoMTrajectoryPlannerTools
 
       time = Math.min(time, sufficientlyLongTime);
 
-      constraintMatrixToPack.set(constraintRow, startIndex,     getCoMAccelerationFirstCoefficient(omega, time));
-      constraintMatrixToPack.set(constraintRow, startIndex + 1, getCoMAccelerationSecondCoefficient(omega, time));
-      constraintMatrixToPack.set(constraintRow, startIndex + 2, getCoMAccelerationThirdCoefficient(time));
-      constraintMatrixToPack.set(constraintRow, startIndex + 3, getCoMAccelerationFourthCoefficient());
-      constraintMatrixToPack.set(constraintRow, startIndex + 4, getCoMAccelerationFifthCoefficient());
-      constraintMatrixToPack.set(constraintRow, startIndex + 5, getCoMAccelerationSixthCoefficient());
+      constraintMatrixToPack.set(constraintRow, startIndex, getCoMAccelerationFirstCoefficientTimeFunction(omega, time));
+      constraintMatrixToPack.set(constraintRow, startIndex + 1, getCoMAccelerationSecondCoefficientTimeFunction(omega, time));
+      constraintMatrixToPack.set(constraintRow, startIndex + 2, getCoMAccelerationThirdCoefficientTimeFunction(time));
+      constraintMatrixToPack.set(constraintRow, startIndex + 3, getCoMAccelerationFourthCoefficientTimeFunction());
+      constraintMatrixToPack.set(constraintRow, startIndex + 4, getCoMAccelerationFifthCoefficientTimeFunction());
+      constraintMatrixToPack.set(constraintRow, startIndex + 5, getCoMAccelerationSixthCoefficientTimeFunction());
 
       zObjectiveMatrixToPack.set(constraintRow, 0, -Math.abs(gravityZ));
    }
@@ -364,19 +364,19 @@ public class CoMTrajectoryPlannerTools
       time = Math.min(time, sufficientlyLongTime);
 
       int colStart = 6 * sequenceId;
-      matrixToPack.set(rowStart, colStart, getCoMJerkFirstCoefficient(omega, time));
-      matrixToPack.set(rowStart, colStart + 1, getCoMJerkSecondCoefficient(omega, time));
-      matrixToPack.set(rowStart, colStart + 2, getCoMJerkThirdCoefficient());
-      matrixToPack.set(rowStart, colStart + 3, getCoMJerkFourthCoefficient());
-      matrixToPack.set(rowStart, colStart + 4, getCoMJerkFifthCoefficient());
-      matrixToPack.set(rowStart, colStart + 5, getCoMJerkSixthCoefficient());
+      matrixToPack.set(rowStart, colStart, getCoMJerkFirstCoefficientTimeFunction(omega, time));
+      matrixToPack.set(rowStart, colStart + 1, getCoMJerkSecondCoefficientTimeFunction(omega, time));
+      matrixToPack.set(rowStart, colStart + 2, getCoMJerkThirdCoefficientTimeFunction());
+      matrixToPack.set(rowStart, colStart + 3, getCoMJerkFourthCoefficientTimeFunction());
+      matrixToPack.set(rowStart, colStart + 4, getCoMJerkFifthCoefficientTimeFunction());
+      matrixToPack.set(rowStart, colStart + 5, getCoMJerkSixthCoefficientTimeFunction());
    }
 
 
    /**
     * e<sup>&omega; t</sup>
     */
-   static double getCoMPositionFirstCoefficient(double omega, double time)
+   static double getCoMPositionFirstCoefficientTimeFunction(double omega, double time)
    {
       return Math.min(sufficientlyLarge, Math.exp(omega * time));
    }
@@ -384,7 +384,7 @@ public class CoMTrajectoryPlannerTools
    /**
     * e<sup>-&omega; t</sup>
     */
-   static double getCoMPositionSecondCoefficient(double omega, double time)
+   static double getCoMPositionSecondCoefficientTimeFunction(double omega, double time)
    {
       return Math.exp(-omega * time);
    }
@@ -392,7 +392,7 @@ public class CoMTrajectoryPlannerTools
    /**
     * t<sup>3</sup>
     */
-   static double getCoMPositionThirdCoefficient(double time)
+   static double getCoMPositionThirdCoefficientTimeFunction(double time)
    {
       return Math.min(sufficientlyLarge, time * time * time);
    }
@@ -400,7 +400,7 @@ public class CoMTrajectoryPlannerTools
    /**
     * t<sup>2</sup>
     */
-   static double getCoMPositionFourthCoefficient(double time)
+   static double getCoMPositionFourthCoefficientTimeFunction(double time)
    {
       return Math.min(sufficientlyLarge, time * time);
    }
@@ -408,7 +408,7 @@ public class CoMTrajectoryPlannerTools
    /**
     * t
     */
-   static double getCoMPositionFifthCoefficient(double time)
+   static double getCoMPositionFifthCoefficientTimeFunction(double time)
    {
       return Math.min(sufficientlyLarge, time);
    }
@@ -416,7 +416,7 @@ public class CoMTrajectoryPlannerTools
    /**
     * 1.0
     */
-   static double getCoMPositionSixthCoefficient()
+   static double getCoMPositionSixthCoefficientTimeFunction()
    {
       return 1.0;
    }
@@ -424,7 +424,7 @@ public class CoMTrajectoryPlannerTools
    /**
     * &omega; e<sup>&omega; t</sup>
     */
-   static double getCoMVelocityFirstCoefficient(double omega, double time)
+   static double getCoMVelocityFirstCoefficientTimeFunction(double omega, double time)
    {
       return omega * Math.min(sufficientlyLarge, Math.exp(omega * time));
    }
@@ -432,7 +432,7 @@ public class CoMTrajectoryPlannerTools
    /**
     * -&omega; e<sup>-&omega; t</sup>
     */
-   static double getCoMVelocitySecondCoefficient(double omega, double time)
+   static double getCoMVelocitySecondCoefficientTimeFunction(double omega, double time)
    {
       return -omega * Math.exp(-omega * time);
    }
@@ -440,7 +440,7 @@ public class CoMTrajectoryPlannerTools
    /**
     * 3 t<sup>2</sup>
     */
-   static double getCoMVelocityThirdCoefficient(double time)
+   static double getCoMVelocityThirdCoefficientTimeFunction(double time)
    {
       return 3.0 * Math.min(sufficientlyLarge, time * time);
    }
@@ -448,7 +448,7 @@ public class CoMTrajectoryPlannerTools
    /**
     * 2 t
     */
-   static double getCoMVelocityFourthCoefficient(double time)
+   static double getCoMVelocityFourthCoefficientTimeFunction(double time)
    {
       return 2.0 * Math.min(sufficientlyLarge, time);
    }
@@ -456,7 +456,7 @@ public class CoMTrajectoryPlannerTools
    /**
     * 1.0
     */
-   static double getCoMVelocityFifthCoefficient()
+   static double getCoMVelocityFifthCoefficientTimeFunction()
    {
       return 1.0;
    }
@@ -464,7 +464,7 @@ public class CoMTrajectoryPlannerTools
    /**
     * 0.0
     */
-   static double getCoMVelocitySixthCoefficient()
+   static double getCoMVelocitySixthCoefficientTimeFunction()
    {
       return 0.0;
    }
@@ -472,7 +472,7 @@ public class CoMTrajectoryPlannerTools
    /**
     * &omega;<sup>2</sup> e<sup>&omega; t</sup>
     */
-   static double getCoMAccelerationFirstCoefficient(double omega, double time)
+   static double getCoMAccelerationFirstCoefficientTimeFunction(double omega, double time)
    {
       return omega * omega * Math.min(sufficientlyLarge, Math.exp(omega * time));
    }
@@ -480,7 +480,7 @@ public class CoMTrajectoryPlannerTools
    /**
     * &omega;<sup>2</sup> e<sup>-&omega; t</sup>
     */
-   static double getCoMAccelerationSecondCoefficient(double omega, double time)
+   static double getCoMAccelerationSecondCoefficientTimeFunction(double omega, double time)
    {
       return omega * omega * Math.exp(-omega * time);
    }
@@ -488,7 +488,7 @@ public class CoMTrajectoryPlannerTools
    /**
     * 6 t
     */
-   static double getCoMAccelerationThirdCoefficient(double time)
+   static double getCoMAccelerationThirdCoefficientTimeFunction(double time)
    {
       return 6.0 * Math.min(sufficientlyLarge, time);
    }
@@ -496,7 +496,7 @@ public class CoMTrajectoryPlannerTools
    /**
     * 2
     */
-   static double getCoMAccelerationFourthCoefficient()
+   static double getCoMAccelerationFourthCoefficientTimeFunction()
    {
       return 2.0;
    }
@@ -504,7 +504,7 @@ public class CoMTrajectoryPlannerTools
    /**
     * 0.0
     */
-   static double getCoMAccelerationFifthCoefficient()
+   static double getCoMAccelerationFifthCoefficientTimeFunction()
    {
       return 0.0;
    }
@@ -512,7 +512,7 @@ public class CoMTrajectoryPlannerTools
    /**
     * 0.0
     */
-   static double getCoMAccelerationSixthCoefficient()
+   static double getCoMAccelerationSixthCoefficientTimeFunction()
    {
       return 0.0;
    }
@@ -520,7 +520,7 @@ public class CoMTrajectoryPlannerTools
    /**
     * &omega;<sup>3</sup> e<sup>&omega; t</sup>
     */
-   static double getCoMJerkFirstCoefficient(double omega, double time)
+   static double getCoMJerkFirstCoefficientTimeFunction(double omega, double time)
    {
       return omega * omega * omega * Math.min(sufficientlyLarge, Math.exp(omega * time));
    }
@@ -528,7 +528,7 @@ public class CoMTrajectoryPlannerTools
    /**
     * -&omega;<sup>3</sup> e<sup>-&omega; t</sup>
     */
-   static double getCoMJerkSecondCoefficient(double omega, double time)
+   static double getCoMJerkSecondCoefficientTimeFunction(double omega, double time)
    {
       return -omega * omega * omega * Math.exp(-omega * time);
    }
@@ -536,7 +536,7 @@ public class CoMTrajectoryPlannerTools
    /**
     * 6.0
     */
-   static double getCoMJerkThirdCoefficient()
+   static double getCoMJerkThirdCoefficientTimeFunction()
    {
       return 6.0;
    }
@@ -544,7 +544,7 @@ public class CoMTrajectoryPlannerTools
    /**
     * 0.0
     */
-   static double getCoMJerkFourthCoefficient()
+   static double getCoMJerkFourthCoefficientTimeFunction()
    {
       return 0.0;
    }
@@ -552,7 +552,7 @@ public class CoMTrajectoryPlannerTools
    /**
     * 0.0
     */
-   static double getCoMJerkFifthCoefficient()
+   static double getCoMJerkFifthCoefficientTimeFunction()
    {
       return 0.0;
    }
@@ -560,7 +560,7 @@ public class CoMTrajectoryPlannerTools
    /**
     * 0.0
     */
-   static double getCoMJerkSixthCoefficient()
+   static double getCoMJerkSixthCoefficientTimeFunction()
    {
       return 0.0;
    }
@@ -568,7 +568,7 @@ public class CoMTrajectoryPlannerTools
    /**
     * 2 e<sup>&omega; t</sup>
     */
-   static double getDCMPositionFirstCoefficient(double omega, double time)
+   static double getDCMPositionFirstCoefficientTimeFunction(double omega, double time)
    {
       return 2.0 * Math.min(sufficientlyLarge, Math.exp(omega * time));
    }
@@ -576,7 +576,7 @@ public class CoMTrajectoryPlannerTools
    /**
     * 0.0
     */
-   static double getDCMPositionSecondCoefficient()
+   static double getDCMPositionSecondCoefficientTimeFunction()
    {
       return 0.0;
    }
@@ -584,7 +584,7 @@ public class CoMTrajectoryPlannerTools
    /**
     * t<sup>3</sup> + 3.0 / &omega; t<sup>2</sup>
     */
-   static double getDCMPositionThirdCoefficient(double omega, double time)
+   static double getDCMPositionThirdCoefficientTimeFunction(double omega, double time)
    {
       return Math.min(sufficientlyLarge, time * time * time) + 3.0 / omega * Math.min(sufficientlyLarge, time * time);
    }
@@ -592,7 +592,7 @@ public class CoMTrajectoryPlannerTools
    /**
     * t<sup>2</sup> + 2.0 / &omega; t
     */
-   static double getDCMPositionFourthCoefficient(double omega, double time)
+   static double getDCMPositionFourthCoefficientTimeFunction(double omega, double time)
    {
       return Math.min(sufficientlyLarge, time * time) + 2.0 / omega * Math.min(sufficientlyLarge, time);
    }
@@ -600,7 +600,7 @@ public class CoMTrajectoryPlannerTools
    /**
     * t + 1/ &omega;
     */
-   static double getDCMPositionFifthCoefficient(double omega, double time)
+   static double getDCMPositionFifthCoefficientTimeFunction(double omega, double time)
    {
       return Math.min(sufficientlyLarge, time) + 1.0 / omega;
    }
@@ -608,7 +608,7 @@ public class CoMTrajectoryPlannerTools
    /**
     * 1.0
     */
-   static double getDCMPositionSixthCoefficient()
+   static double getDCMPositionSixthCoefficientTimeFunction()
    {
       return 1.0;
    }
@@ -616,7 +616,7 @@ public class CoMTrajectoryPlannerTools
    /**
     * 0.0
     */
-   static double getVRPPositionFirstCoefficient()
+   static double getVRPPositionFirstCoefficientTimeFunction()
    {
       return 0.0;
    }
@@ -624,7 +624,7 @@ public class CoMTrajectoryPlannerTools
    /**
     * 0.0
     */
-   static double getVRPPositionSecondCoefficient()
+   static double getVRPPositionSecondCoefficientTimeFunction()
    {
       return 0.0;
    }
@@ -632,7 +632,7 @@ public class CoMTrajectoryPlannerTools
    /**
     * t<sup>3</sup> - 6.0 t / &omega;<sup>2</sup>
     */
-   static double getVRPPositionThirdCoefficient(double omega, double time)
+   static double getVRPPositionThirdCoefficientTimeFunction(double omega, double time)
    {
       return Math.min(sufficientlyLarge, time * time * time) - 6.0 * Math.min(sufficientlyLarge, time) / (omega * omega);
    }
@@ -640,7 +640,7 @@ public class CoMTrajectoryPlannerTools
    /**
     * t<sup>2</sup> - 2.0 / &omega;<sup>2</sup>
     */
-   static double getVRPPositionFourthCoefficient(double omega, double time)
+   static double getVRPPositionFourthCoefficientTimeFunction(double omega, double time)
    {
       return Math.min(sufficientlyLarge, time * time) - 2.0 / (omega * omega);
    }
@@ -648,7 +648,7 @@ public class CoMTrajectoryPlannerTools
    /**
     * t
     */
-   static double getVRPPositionFifthCoefficient(double time)
+   static double getVRPPositionFifthCoefficientTimeFunction(double time)
    {
       return Math.min(sufficientlyLarge, time);
    }
@@ -656,7 +656,7 @@ public class CoMTrajectoryPlannerTools
    /**
     * 1.0
     */
-   static double getVRPPositionSixthCoefficient()
+   static double getVRPPositionSixthCoefficientTimeFunction()
    {
       return 1.0;
    }
@@ -664,7 +664,7 @@ public class CoMTrajectoryPlannerTools
    /**
     * 0.0
     */
-   static double getVRPVelocityFirstCoefficient()
+   static double getVRPVelocityFirstCoefficientTimeFunction()
    {
       return 0.0;
    }
@@ -672,7 +672,7 @@ public class CoMTrajectoryPlannerTools
    /**
     * 0.0
     */
-   static double getVRPVelocitySecondCoefficient()
+   static double getVRPVelocitySecondCoefficientTimeFunction()
    {
       return 0.0;
    }
@@ -680,7 +680,7 @@ public class CoMTrajectoryPlannerTools
    /**
     * 3 t<sup>2</sup> - 6 / &omega;<sup>2</sup>
     */
-   static double getVRPVelocityThirdCoefficient(double omega, double time)
+   static double getVRPVelocityThirdCoefficientTimeFunction(double omega, double time)
    {
       return 3.0 * Math.min(sufficientlyLarge, time * time) - 6.0 / (omega * omega);
    }
@@ -688,7 +688,7 @@ public class CoMTrajectoryPlannerTools
    /**
     * 2 t
     */
-   static double getVRPVelocityFourthCoefficient(double time)
+   static double getVRPVelocityFourthCoefficientTimeFunction(double time)
    {
       return 2.0 * Math.min(sufficientlyLarge, time);
    }
@@ -696,7 +696,7 @@ public class CoMTrajectoryPlannerTools
    /**
     * 1.0
     */
-   static double getVRPVelocityFifthCoefficient()
+   static double getVRPVelocityFifthCoefficientTimeFunction()
    {
       return 1.0;
    }
@@ -704,7 +704,7 @@ public class CoMTrajectoryPlannerTools
    /**
     * 0.0
     */
-   static double getVRPVelocitySixthCoefficient()
+   static double getVRPVelocitySixthCoefficientTimeFunction()
    {
       return 0.0;
    }
@@ -716,12 +716,12 @@ public class CoMTrajectoryPlannerTools
    {
       comPositionToPack.checkReferenceFrameMatch(worldFrame);
       comPositionToPack.setToZero();
-      comPositionToPack.scaleAdd(getCoMPositionFirstCoefficient(omega, timeInPhase), firstCoefficient, comPositionToPack);
-      comPositionToPack.scaleAdd(getCoMPositionSecondCoefficient(omega, timeInPhase), secondCoefficient, comPositionToPack);
-      comPositionToPack.scaleAdd(getCoMPositionThirdCoefficient(timeInPhase), thirdCoefficient, comPositionToPack);
-      comPositionToPack.scaleAdd(getCoMPositionFourthCoefficient(timeInPhase), fourthCoefficient, comPositionToPack);
-      comPositionToPack.scaleAdd(getCoMPositionFifthCoefficient(timeInPhase), fifthCoefficient, comPositionToPack);
-      comPositionToPack.scaleAdd(getCoMPositionSixthCoefficient(), sixthCoefficient, comPositionToPack);
+      comPositionToPack.scaleAdd(getCoMPositionFirstCoefficientTimeFunction(omega, timeInPhase), firstCoefficient, comPositionToPack);
+      comPositionToPack.scaleAdd(getCoMPositionSecondCoefficientTimeFunction(omega, timeInPhase), secondCoefficient, comPositionToPack);
+      comPositionToPack.scaleAdd(getCoMPositionThirdCoefficientTimeFunction(timeInPhase), thirdCoefficient, comPositionToPack);
+      comPositionToPack.scaleAdd(getCoMPositionFourthCoefficientTimeFunction(timeInPhase), fourthCoefficient, comPositionToPack);
+      comPositionToPack.scaleAdd(getCoMPositionFifthCoefficientTimeFunction(timeInPhase), fifthCoefficient, comPositionToPack);
+      comPositionToPack.scaleAdd(getCoMPositionSixthCoefficientTimeFunction(), sixthCoefficient, comPositionToPack);
    }
 
    static void constructDesiredCoMVelocity(FixedFrameVector3DBasics comVelocityToPack, FramePoint3DReadOnly firstCoefficient,
@@ -731,12 +731,12 @@ public class CoMTrajectoryPlannerTools
    {
       comVelocityToPack.checkReferenceFrameMatch(worldFrame);
       comVelocityToPack.setToZero();
-      comVelocityToPack.scaleAdd(getCoMVelocityFirstCoefficient(omega, timeInPhase), firstCoefficient, comVelocityToPack);
-      comVelocityToPack.scaleAdd(getCoMVelocitySecondCoefficient(omega, timeInPhase), secondCoefficient, comVelocityToPack);
-      comVelocityToPack.scaleAdd(getCoMVelocityThirdCoefficient(timeInPhase), thirdCoefficient, comVelocityToPack);
-      comVelocityToPack.scaleAdd(getCoMVelocityFourthCoefficient(timeInPhase), fourthCoefficient, comVelocityToPack);
-      comVelocityToPack.scaleAdd(getCoMVelocityFifthCoefficient(), fifthCoefficient, comVelocityToPack);
-      comVelocityToPack.scaleAdd(getCoMVelocitySixthCoefficient(), sixthCoefficient, comVelocityToPack);
+      comVelocityToPack.scaleAdd(getCoMVelocityFirstCoefficientTimeFunction(omega, timeInPhase), firstCoefficient, comVelocityToPack);
+      comVelocityToPack.scaleAdd(getCoMVelocitySecondCoefficientTimeFunction(omega, timeInPhase), secondCoefficient, comVelocityToPack);
+      comVelocityToPack.scaleAdd(getCoMVelocityThirdCoefficientTimeFunction(timeInPhase), thirdCoefficient, comVelocityToPack);
+      comVelocityToPack.scaleAdd(getCoMVelocityFourthCoefficientTimeFunction(timeInPhase), fourthCoefficient, comVelocityToPack);
+      comVelocityToPack.scaleAdd(getCoMVelocityFifthCoefficientTimeFunction(), fifthCoefficient, comVelocityToPack);
+      comVelocityToPack.scaleAdd(getCoMVelocitySixthCoefficientTimeFunction(), sixthCoefficient, comVelocityToPack);
    }
 
    static void constructDesiredCoMAcceleration(FixedFrameVector3DBasics comAccelerationToPack, FramePoint3DReadOnly firstCoefficient,
@@ -746,11 +746,11 @@ public class CoMTrajectoryPlannerTools
    {
       comAccelerationToPack.checkReferenceFrameMatch(worldFrame);
       comAccelerationToPack.setToZero();
-      comAccelerationToPack.scaleAdd(getCoMAccelerationFirstCoefficient(omega, timeInPhase), firstCoefficient, comAccelerationToPack);
-      comAccelerationToPack.scaleAdd(getCoMAccelerationSecondCoefficient(omega, timeInPhase), secondCoefficient, comAccelerationToPack);
-      comAccelerationToPack.scaleAdd(getCoMAccelerationThirdCoefficient(timeInPhase), thirdCoefficient, comAccelerationToPack);
-      comAccelerationToPack.scaleAdd(getCoMAccelerationFourthCoefficient(), fourthCoefficient, comAccelerationToPack);
-      comAccelerationToPack.scaleAdd(getCoMAccelerationFifthCoefficient(), fifthCoefficient, comAccelerationToPack);
-      comAccelerationToPack.scaleAdd(getCoMAccelerationSixthCoefficient(), sixthCoefficient, comAccelerationToPack);
+      comAccelerationToPack.scaleAdd(getCoMAccelerationFirstCoefficientTimeFunction(omega, timeInPhase), firstCoefficient, comAccelerationToPack);
+      comAccelerationToPack.scaleAdd(getCoMAccelerationSecondCoefficientTimeFunction(omega, timeInPhase), secondCoefficient, comAccelerationToPack);
+      comAccelerationToPack.scaleAdd(getCoMAccelerationThirdCoefficientTimeFunction(timeInPhase), thirdCoefficient, comAccelerationToPack);
+      comAccelerationToPack.scaleAdd(getCoMAccelerationFourthCoefficientTimeFunction(), fourthCoefficient, comAccelerationToPack);
+      comAccelerationToPack.scaleAdd(getCoMAccelerationFifthCoefficientTimeFunction(), fifthCoefficient, comAccelerationToPack);
+      comAccelerationToPack.scaleAdd(getCoMAccelerationSixthCoefficientTimeFunction(), sixthCoefficient, comAccelerationToPack);
    }
 }
