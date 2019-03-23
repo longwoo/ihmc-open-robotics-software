@@ -55,8 +55,8 @@ public class CoMTrajectoryOptimizationPlanner implements CoMTrajectoryPlannerInt
    private static final boolean VISUALIZE = true;
    private static final double POINT_SIZE = 0.005;
 
-   private static final double workWeight = 0.0;
-   private static final double vrpTrackingWeight = 10000.0;
+   private static final double workWeight = 0.1;
+   private static final double vrpTrackingWeight = 1.0;
 
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
 

@@ -15,7 +15,9 @@ import java.util.List;
 public class CoMTrajectoryPlannerTools
 {
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
-   private static final double sufficientlyLarge = 1.0e10;
+   static final double sufficientlyLarge = 1.0e10;
+   static final double sufficientlyLongTime = 1.0e2;
+   static final double sufficientlyLargeThird = Math.pow(1.0e10, 1.0 / 3.0);
 
    static void computeVRPWaypoints(double nominalCoMHeight, double gravityZ, double omega, FrameVector3DReadOnly currentCoMVelocity,
                                    List<? extends ContactStateProvider> contactSequence, RecyclingArrayList<FramePoint3D> startVRPPositionsToPack,
@@ -107,6 +109,8 @@ public class CoMTrajectoryPlannerTools
    {
       centerOfMassLocationForConstraint.checkReferenceFrameMatch(worldFrame);
 
+      time = Math.min(time, sufficientlyLongTime);
+
       int colStart = 6 * sequenceId;
       constraintMatrixToPack.set(rowStart, colStart,     getCoMPositionFirstCoefficient(omega, time));
       constraintMatrixToPack.set(rowStart, colStart + 1, getCoMPositionSecondCoefficient(omega, time));
@@ -149,6 +153,8 @@ public class CoMTrajectoryPlannerTools
    {
       desiredDCMPosition.checkReferenceFrameMatch(worldFrame);
 
+      time = Math.min(time, sufficientlyLongTime);
+
       int startIndex = 6 * sequenceId;
 
       // add constraints on terminal DCM position
@@ -183,6 +189,8 @@ public class CoMTrajectoryPlannerTools
                                         DenseMatrix64F yObjectiveMatrixToPack, DenseMatrix64F zObjectiveMatrixToPack, DenseMatrix64F vrpWaypointJacobianToPack)
    {
       int startIndex = 6 * sequenceId;
+
+      time = Math.min(time, sufficientlyLongTime);
 
       desiredVRPPosition.checkReferenceFrameMatch(worldFrame);
 
@@ -258,6 +266,8 @@ public class CoMTrajectoryPlannerTools
       int previousStartIndex = 6 * previousSequence;
       int nextStartIndex = 6 * nextSequence;
 
+      previousDuration = Math.min(previousDuration, sufficientlyLongTime);
+
       constraintMatrixToPack.set(constraintRow, previousStartIndex,      getCoMPositionFirstCoefficient(omega, previousDuration));
       constraintMatrixToPack.set(constraintRow, previousStartIndex + 1,  getCoMPositionSecondCoefficient(omega, previousDuration));
       constraintMatrixToPack.set(constraintRow, previousStartIndex + 2,  getCoMPositionThirdCoefficient(previousDuration));
@@ -294,6 +304,8 @@ public class CoMTrajectoryPlannerTools
       int previousStartIndex = 6 * previousSequence;
       int nextStartIndex = 6 * nextSequence;
 
+      previousDuration = Math.min(previousDuration, sufficientlyLongTime);
+
       constraintMatrixToPack.set(constraintRow, previousStartIndex,      getCoMVelocityFirstCoefficient(omega, previousDuration));
       constraintMatrixToPack.set(constraintRow, previousStartIndex + 1,  getCoMVelocitySecondCoefficient(omega, previousDuration));
       constraintMatrixToPack.set(constraintRow, previousStartIndex + 2,  getCoMVelocityThirdCoefficient(previousDuration));
@@ -324,6 +336,8 @@ public class CoMTrajectoryPlannerTools
    {
       int startIndex = 6 * sequenceId;
 
+      time = Math.min(time, sufficientlyLongTime);
+
       constraintMatrixToPack.set(constraintRow, startIndex,     getCoMAccelerationFirstCoefficient(omega, time));
       constraintMatrixToPack.set(constraintRow, startIndex + 1, getCoMAccelerationSecondCoefficient(omega, time));
       constraintMatrixToPack.set(constraintRow, startIndex + 2, getCoMAccelerationThirdCoefficient(time));
@@ -347,6 +361,8 @@ public class CoMTrajectoryPlannerTools
        */
    static void constrainCoMJerkToZero(double time, double omega, int sequenceId, int rowStart, DenseMatrix64F matrixToPack)
    {
+      time = Math.min(time, sufficientlyLongTime);
+
       int colStart = 6 * sequenceId;
       matrixToPack.set(rowStart, colStart, getCoMJerkFirstCoefficient(omega, time));
       matrixToPack.set(rowStart, colStart + 1, getCoMJerkSecondCoefficient(omega, time));
