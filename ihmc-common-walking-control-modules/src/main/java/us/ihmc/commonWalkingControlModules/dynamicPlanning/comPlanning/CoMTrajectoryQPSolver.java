@@ -105,6 +105,7 @@ public class CoMTrajectoryQPSolver
       return !MatrixTools.containsNaN(solverOutput);
    }
 
+
    public void addTask(DenseMatrix64F taskJacobian, DenseMatrix64F taskObjective, DenseMatrix64F taskWeight)
    {
       addTaskInternal(taskJacobian, taskObjective, taskWeight, 0);

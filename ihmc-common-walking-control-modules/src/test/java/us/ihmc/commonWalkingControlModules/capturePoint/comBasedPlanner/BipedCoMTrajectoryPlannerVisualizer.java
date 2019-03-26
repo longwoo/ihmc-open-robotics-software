@@ -214,6 +214,7 @@ public class BipedCoMTrajectoryPlannerVisualizer
       //      steps = createFancySteps(soleFrames);
       //      steps = createSkippingSteps(soleFrames);
 
+
       springStiffness.set(computeStiffness());
       //      restingSpringLength.set(computeSpringRestingLength(nominalHeight, springStiffness.getDoubleValue()));
       restingSpringLength.set(1.4);

@@ -2,7 +2,6 @@ package us.ihmc.commonWalkingControlModules.dynamicPlanning.comPlanning;
 
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
-import us.ihmc.commons.MathTools;
 import us.ihmc.commons.lists.RecyclingArrayList;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
@@ -15,7 +14,6 @@ import us.ihmc.graphicsDescription.appearance.YoAppearance;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicPosition;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.graphicsDescription.yoGraphics.plotting.ArtifactList;
-import us.ihmc.robotics.linearAlgebra.MatrixTools;
 import us.ihmc.robotics.linearAlgebra.commonOps.NativeCommonOps;
 import us.ihmc.yoVariables.providers.DoubleProvider;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
@@ -57,15 +55,12 @@ public class CoMTrajectoryOptimizationPlanner implements CoMTrajectoryPlannerInt
 
    private static final double workWeight = 0.1;
    private static final double vrpTrackingWeight = 1.0;
+   private static final double initialCoMVelocityTrackingWeight = 100.0;
 
    private final YoVariableRegistry registry = new YoVariableRegistry(getClass().getSimpleName());
 
    private final DenseMatrix64F coefficientConstraintMultipliers = new DenseMatrix64F(0, 0);
    private final DenseMatrix64F coefficientConstraintMultipliersInv = new DenseMatrix64F(0, 0);
-
-   private final DenseMatrix64F xEquivalents = new DenseMatrix64F(0, 1);
-   private final DenseMatrix64F yEquivalents = new DenseMatrix64F(0, 1);
-   private final DenseMatrix64F zEquivalents = new DenseMatrix64F(0, 1);
 
    private final DenseMatrix64F xConstants = new DenseMatrix64F(0, 1);
    private final DenseMatrix64F yConstants = new DenseMatrix64F(0, 1);
@@ -77,26 +72,22 @@ public class CoMTrajectoryOptimizationPlanner implements CoMTrajectoryPlannerInt
    private final DenseMatrix64F vrpYWaypoints = new DenseMatrix64F(0, 1);
    private final DenseMatrix64F vrpZWaypoints = new DenseMatrix64F(0, 1);
 
-   private final DenseMatrix64F vrpXWaypointsSolution = new DenseMatrix64F(0, 1);
-   private final DenseMatrix64F vrpYWaypointsSolution = new DenseMatrix64F(0, 1);
-   private final DenseMatrix64F vrpZWaypointsSolution = new DenseMatrix64F(0, 1);
-
    private final DenseMatrix64F xCoefficientVector = new DenseMatrix64F(0, 1);
    private final DenseMatrix64F yCoefficientVector = new DenseMatrix64F(0, 1);
    private final DenseMatrix64F zCoefficientVector = new DenseMatrix64F(0, 1);
 
-   private final DenseMatrix64F xConstraintObjective = new DenseMatrix64F(0, 1);
-   private final DenseMatrix64F yConstraintObjective = new DenseMatrix64F(0, 1);
-   private final DenseMatrix64F zConstraintObjective = new DenseMatrix64F(0, 1);
+   private final DenseMatrix64F xCoefficientsObjective = new DenseMatrix64F(0, 1);
+   private final DenseMatrix64F yCoefficientsObjective = new DenseMatrix64F(0, 1);
+   private final DenseMatrix64F zCoefficientsObjective = new DenseMatrix64F(0, 1);
 
    private final DenseMatrix64F xVRPSolution = new DenseMatrix64F(0, 1);
    private final DenseMatrix64F yVRPSolution = new DenseMatrix64F(0, 1);
    private final DenseMatrix64F zVRPSolution = new DenseMatrix64F(0, 1);
 
-
-   private final DenseMatrix64F workMinimizationWeightMatrix = new DenseMatrix64F(0, 0);
+   private final QPInput workMinimizationInput = new QPInput(10);
+   private final QPInput vrpTrackingInput = new QPInput(10);
+   private final QPInput initialCoMVelocityInput = new QPInput(10);
    private final DenseMatrix64F coefficientsJacobian = new DenseMatrix64F(0, 0);
-   private final DenseMatrix64F vrpTrackingJacobian = new DenseMatrix64F(0, 0);
 
    private final CoMTrajectoryQPSolver xSolver;
    private final CoMTrajectoryQPSolver ySolver;
@@ -216,55 +207,33 @@ public class CoMTrajectoryOptimizationPlanner implements CoMTrajectoryPlannerInt
                                                     endVRPPositions);
 
       solveForCoefficientConstraintMatrix(contactSequence);
+      computeJacobianAndObjectivesToFindCoMCoefficients(contactSequence);
 
-      /*
-      xEquivalents.set(xConstants);
-      yEquivalents.set(yConstants);
-      zEquivalents.set(zConstants);
+      computeWorkMinimizationTask(contactSequence);
+      computeVRPTrackingTask();
 
-
-      CommonOps.multAdd(vrpWaypointJacobian, vrpXWaypoints, xEquivalents);
-      CommonOps.multAdd(vrpWaypointJacobian, vrpYWaypoints, yEquivalents);
-      CommonOps.multAdd(vrpWaypointJacobian, vrpZWaypoints, zEquivalents);
-
-
-      CommonOps.mult(coefficientConstraintMultipliersInv, xEquivalents, xCoefficientVector);
-      CommonOps.mult(coefficientConstraintMultipliersInv, yEquivalents, yCoefficientVector);
-      CommonOps.mult(coefficientConstraintMultipliersInv, zEquivalents, zCoefficientVector);
-
-*/
-
-      inputCalculator.computeBezierMapMultiplier(contactSequence);
-      inputCalculator.computeWorkWeightMatrix(contactSequence, workWeight, workMinimizationWeightMatrix);
-      inputCalculator.computeJacobianToCoMCoefficients(coefficientConstraintMultipliersInv, vrpWaypointJacobian, coefficientsJacobian);
-      inputCalculator.computeJacobianToVRPBounds(vrpTrackingJacobian);
-      NativeCommonOps.mult(coefficientConstraintMultipliersInv, xConstants, xConstraintObjective);
-      NativeCommonOps.mult(coefficientConstraintMultipliersInv, yConstants, yConstraintObjective);
-      NativeCommonOps.mult(coefficientConstraintMultipliersInv, zConstants, zConstraintObjective);
-
-      CommonOps.scale(-1.0, xConstraintObjective);
-      CommonOps.scale(-1.0, yConstraintObjective);
-      CommonOps.scale(-1.0, zConstraintObjective);
 
       xSolver.reset();
       ySolver.reset();
       zSolver.reset();
 
-      xSolver.addTask(coefficientsJacobian, xConstraintObjective, workMinimizationWeightMatrix);
-      ySolver.addTask(coefficientsJacobian, yConstraintObjective, workMinimizationWeightMatrix);
-      zSolver.addTask(coefficientsJacobian, zConstraintObjective, workMinimizationWeightMatrix);
+      xSolver.addTask(workMinimizationInput.taskJacobian, workMinimizationInput.taskXObjective, workMinimizationInput.taskWeightMatrix);
+      ySolver.addTask(workMinimizationInput.taskJacobian, workMinimizationInput.taskYObjective, workMinimizationInput.taskWeightMatrix);
+      zSolver.addTask(workMinimizationInput.taskJacobian, workMinimizationInput.taskZObjective, workMinimizationInput.taskWeightMatrix);
 
-      xSolver.addTask(vrpTrackingJacobian, vrpXWaypoints, vrpTrackingWeight);
-      ySolver.addTask(vrpTrackingJacobian, vrpYWaypoints, vrpTrackingWeight);
-      zSolver.addTask(vrpTrackingJacobian, vrpZWaypoints, vrpTrackingWeight);
+      xSolver.addTask(vrpTrackingInput.taskJacobian, vrpTrackingInput.taskXObjective, vrpTrackingWeight);
+      ySolver.addTask(vrpTrackingInput.taskJacobian, vrpTrackingInput.taskYObjective, vrpTrackingWeight);
+      zSolver.addTask(vrpTrackingInput.taskJacobian, vrpTrackingInput.taskZObjective, vrpTrackingWeight);
 
-      if (!matrixValid(workMinimizationWeightMatrix))
-         throw new RuntimeException("Invalid work minimization weight");
-      if (!matrixValid(vrpTrackingJacobian))
-         throw new RuntimeException("Invalid vrp tracking jacobian");
+
+      // add cost for tracking the initial CoM Velocity
+      xSolver.addTask(initialCoMVelocityInput.taskJacobian, initialCoMVelocityInput.taskXObjective, initialCoMVelocityTrackingWeight);
+      xSolver.addTask(initialCoMVelocityInput.taskJacobian, initialCoMVelocityInput.taskYObjective, initialCoMVelocityTrackingWeight);
+      xSolver.addTask(initialCoMVelocityInput.taskJacobian, initialCoMVelocityInput.taskZObjective, initialCoMVelocityTrackingWeight);
+
       if (!matrixValid(coefficientsJacobian))
          throw new RuntimeException("Invalid coefficient jacobian");
-      if (!matrixValid(xConstraintObjective) || !matrixValid(yConstraintObjective) || !matrixValid(zConstraintObjective))
+      if (!matrixValid(xCoefficientsObjective) || !matrixValid(yCoefficientsObjective) || !matrixValid(zCoefficientsObjective))
          throw new RuntimeException("Invalid constraint objective");
 
       if (!xSolver.solve())
@@ -282,19 +251,12 @@ public class CoMTrajectoryOptimizationPlanner implements CoMTrajectoryPlannerInt
          throw new RuntimeException("Invalid solution");
 
       // construct the coefficient vector from the vrp solutions
-      CommonOps.scale(-1.0, xConstraintObjective, xCoefficientVector);
-      CommonOps.scale(-1.0, yConstraintObjective, yCoefficientVector);
-      CommonOps.scale(-1.0, zConstraintObjective, zCoefficientVector);
+      CommonOps.scale(-1.0, xCoefficientsObjective, xCoefficientVector);
+      CommonOps.scale(-1.0, yCoefficientsObjective, yCoefficientVector);
+      CommonOps.scale(-1.0, zCoefficientsObjective, zCoefficientVector);
       CommonOps.multAdd(coefficientsJacobian, xVRPSolution, xCoefficientVector);
       CommonOps.multAdd(coefficientsJacobian, yVRPSolution, yCoefficientVector);
       CommonOps.multAdd(coefficientsJacobian, zVRPSolution, zCoefficientVector);
-
-      CommonOps.mult(vrpTrackingJacobian, xVRPSolution, vrpXWaypointsSolution);
-      CommonOps.mult(vrpTrackingJacobian, yVRPSolution, vrpYWaypointsSolution);
-      CommonOps.mult(vrpTrackingJacobian, zVRPSolution, vrpZWaypointsSolution);
-
-      // FIXME this stuff isn't right
-
 
 
 
@@ -486,9 +448,6 @@ public class CoMTrajectoryOptimizationPlanner implements CoMTrajectoryPlannerInt
 
       coefficientConstraintMultipliers.reshape(size, size);
       coefficientConstraintMultipliersInv.reshape(size, size);
-      xEquivalents.reshape(size, 1);
-      yEquivalents.reshape(size, 1);
-      zEquivalents.reshape(size, 1);
       xConstants.reshape(size, 1);
       yConstants.reshape(size, 1);
       zConstants.reshape(size, 1);
@@ -500,11 +459,12 @@ public class CoMTrajectoryOptimizationPlanner implements CoMTrajectoryPlannerInt
       yCoefficientVector.reshape(size, 1);
       zCoefficientVector.reshape(size, 1);
 
+      workMinimizationInput.reshape(size, numberOfVRPWaypoints);
+      vrpTrackingInput.reshape(numberOfVRPWaypoints, numberOfVRPWaypoints);
+      initialCoMVelocityInput.reshape(1, numberOfVRPWaypoints);
+
       coefficientConstraintMultipliers.zero();
       coefficientConstraintMultipliersInv.zero();
-      xEquivalents.zero();
-      yEquivalents.zero();
-      zEquivalents.zero();
       xConstants.zero();
       yConstants.zero();
       zConstants.zero();
@@ -519,33 +479,22 @@ public class CoMTrajectoryOptimizationPlanner implements CoMTrajectoryPlannerInt
 
 
 
-      vrpZWaypointsSolution.reshape(numberOfVRPWaypoints, 1);
-      vrpYWaypointsSolution.reshape(numberOfVRPWaypoints, 1);
-      vrpXWaypointsSolution.reshape(numberOfVRPWaypoints, 1);
-
-      workMinimizationWeightMatrix.reshape(size, size);
       coefficientsJacobian.reshape(size, numberOfVRPWaypoints);
-      vrpTrackingJacobian.reshape(numberOfVRPWaypoints, numberOfVRPWaypoints);
 
-      xConstraintObjective.reshape(size, 1);
-      yConstraintObjective.reshape(size, 1);
-      zConstraintObjective.reshape(size, 1);
+      xCoefficientsObjective.reshape(size, 1);
+      yCoefficientsObjective.reshape(size, 1);
+      zCoefficientsObjective.reshape(size, 1);
 
       xVRPSolution.reshape(numberOfVRPWaypoints, 1);
       yVRPSolution.reshape(numberOfVRPWaypoints, 1);
       zVRPSolution.reshape(numberOfVRPWaypoints, 1);
 
-      vrpXWaypointsSolution.zero();
-      vrpYWaypointsSolution.zero();
-      vrpZWaypointsSolution.zero();
 
-      workMinimizationWeightMatrix.zero();
       coefficientsJacobian.zero();
-      vrpTrackingJacobian.zero();
 
-      xConstraintObjective.zero();
-      yConstraintObjective.zero();
-      zConstraintObjective.zero();
+      xCoefficientsObjective.zero();
+      yCoefficientsObjective.zero();
+      zCoefficientsObjective.zero();
 
       xVRPSolution.zero();
       yVRPSolution.zero();
@@ -583,6 +532,39 @@ public class CoMTrajectoryOptimizationPlanner implements CoMTrajectoryPlannerInt
 
       NativeCommonOps.invert(coefficientConstraintMultipliers, coefficientConstraintMultipliersInv);
    }
+
+   private void computeJacobianAndObjectivesToFindCoMCoefficients(List<? extends ContactStateProvider> contactSequence)
+   {
+      inputCalculator.computeBezierMapMultiplier(contactSequence);
+      inputCalculator.computeJacobianToCoMCoefficients(coefficientConstraintMultipliersInv, vrpWaypointJacobian, coefficientsJacobian);
+      inputCalculator.computeCoMCoefficientsObjective(coefficientConstraintMultipliersInv, xConstants, yConstants, zConstants, xCoefficientsObjective,
+                                                      yCoefficientsObjective, zCoefficientsObjective);
+   }
+
+   private void computeWorkMinimizationTask(List<? extends ContactStateProvider> contactSequence)
+   {
+      inputCalculator.computeWorkWeightMatrix(contactSequence, workWeight, workMinimizationInput.taskWeightMatrix);
+      workMinimizationInput.setTaskJacobian(coefficientsJacobian);
+      workMinimizationInput.setTaskXObjective(xCoefficientsObjective);
+      workMinimizationInput.setTaskYObjective(yCoefficientsObjective);
+      workMinimizationInput.setTaskZObjective(zCoefficientsObjective);
+   }
+
+   private void computeVRPTrackingTask()
+   {
+      inputCalculator.computeJacobianToVRPBounds(vrpTrackingInput.taskJacobian);
+
+      vrpTrackingInput.setTaskXObjective(vrpXWaypoints);
+      vrpTrackingInput.setTaskYObjective(vrpYWaypoints);
+      vrpTrackingInput.setTaskZObjective(vrpZWaypoints);
+   }
+
+   private void computeInitialCoMVelocityTrackingTask()
+   {
+      inputCalculator.computeJacobianToCoMVelocity(0, 0.0, omega.getValue(), coefficientsJacobian, xCoefficientsObjective, yCoefficientsObjective,
+                                                   zCoefficientsObjective, currentCoMVelocity, initialCoMVelocityInput);
+   }
+
 
    /**
     * <p> Sets the continuity constraint on the initial CoM position. This DOES result in a initial discontinuity on the desired DCM location,

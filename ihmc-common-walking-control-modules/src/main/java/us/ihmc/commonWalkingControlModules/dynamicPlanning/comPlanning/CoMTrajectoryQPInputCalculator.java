@@ -2,7 +2,9 @@ package us.ihmc.commonWalkingControlModules.dynamicPlanning.comPlanning;
 
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
-import us.ihmc.commons.MathTools;
+import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
+import us.ihmc.robotics.linearAlgebra.MatrixTools;
+import us.ihmc.robotics.linearAlgebra.commonOps.NativeCommonOps;
 import us.ihmc.yoVariables.providers.DoubleProvider;
 
 import java.util.List;
@@ -67,10 +69,74 @@ public class CoMTrajectoryQPInputCalculator
       CommonOps.mult(coefficientConstraintInv, tempJ, jacobianToPack);
    }
 
+   public void computeCoMCoefficientsObjective(DenseMatrix64F coefficientConstraintInv, DenseMatrix64F xCoefficientConstraintConstants,
+                                               DenseMatrix64F yCoefficientConstraintConstants, DenseMatrix64F zCoefficientConstraintConstants,
+                                               DenseMatrix64F xObjectiveToPack, DenseMatrix64F yObjectiveToPack, DenseMatrix64F zObjectiveToPack)
+   {
+      NativeCommonOps.mult(coefficientConstraintInv, xCoefficientConstraintConstants, xObjectiveToPack);
+      NativeCommonOps.mult(coefficientConstraintInv, yCoefficientConstraintConstants, yObjectiveToPack);
+      NativeCommonOps.mult(coefficientConstraintInv, zCoefficientConstraintConstants, zObjectiveToPack);
+
+      CommonOps.scale(-1.0, xObjectiveToPack);
+      CommonOps.scale(-1.0, yObjectiveToPack);
+      CommonOps.scale(-1.0, zObjectiveToPack);
+   }
+
    public void computeJacobianToVRPBounds(DenseMatrix64F jacobianToPack)
    {
       jacobianToPack.set(bezierMapMultiplier);
    }
+
+   public void computeJacobianToCoMPosition(int segment, double timeInSegment, double omega, DenseMatrix64F jacobianToCoMCoefficients,
+                                            DenseMatrix64F jacobianToPack)
+   {
+      int size = indexHandler.getNumberOfVRPWaypoints();
+      jacobianToPack.reshape(1, size);
+      jacobianToPack.zero();
+
+      tempJ.reshape(1, indexHandler.getTotalSize());
+      tempJ.zero();
+
+      // TODO the tempJ is super sparse, so this could be a lot faster
+      populateCoMPositionTimeVector(segment, timeInSegment, omega, tempJ);
+      CommonOps.mult(tempJ, jacobianToCoMCoefficients, jacobianToPack);
+   }
+
+   public void computeJacobianToCoMVelocity(int segment, double timeInSegment, double omega, DenseMatrix64F jacobianToCoMCoefficients,
+                                            DenseMatrix64F xConstraintObjective, DenseMatrix64F yConstraintObjective, DenseMatrix64F zConstraintObjective,
+                                            FrameVector3DReadOnly desiredCoMVelocity, QPInput taskToPack)
+   {
+      int size = indexHandler.getNumberOfVRPWaypoints();
+
+      tempJ.reshape(1, indexHandler.getTotalSize());
+      tempJ.zero();
+
+      // TODO the tempJ is super sparse, so this could be a lot faster
+      populateCoMVelocityTimeVector(segment, timeInSegment, omega, tempJ);
+      CommonOps.mult(tempJ, jacobianToCoMCoefficients, taskToPack.taskJacobian);
+      CommonOps.mult(tempJ, xConstraintObjective, taskToPack.taskXObjective);
+      CommonOps.mult(tempJ, yConstraintObjective, taskToPack.taskYObjective);
+      CommonOps.mult(tempJ, zConstraintObjective, taskToPack.taskZObjective);
+      CommonOps.add(taskToPack.taskXObjective, desiredCoMVelocity.getX());
+      CommonOps.add(taskToPack.taskYObjective, desiredCoMVelocity.getY());
+      CommonOps.add(taskToPack.taskZObjective, desiredCoMVelocity.getZ());
+   }
+
+   public void computeJacobianToCoMAcceleration(int segment, double timeInSegment, double omega, DenseMatrix64F jacobianToCoMCoefficients,
+                                                DenseMatrix64F jacobianToPack)
+   {
+      int size = indexHandler.getNumberOfVRPWaypoints();
+      jacobianToPack.reshape(1, size);
+      jacobianToPack.zero();
+
+      tempJ.reshape(1, indexHandler.getTotalSize());
+      tempJ.zero();
+
+      // TODO the tempJ is super sparse, so this could be a lot faster
+      populateCoMAccelerationTimeVector(segment, timeInSegment, omega, tempJ);
+      CommonOps.mult(tempJ, jacobianToCoMCoefficients, jacobianToPack);
+   }
+
 
    static void populateWorkWeightTermForSegment(int segmentNumber, double segmentDuration, double omega, double costWeight, DenseMatrix64F matrixToPack)
    {
@@ -107,5 +173,38 @@ public class CoMTrajectoryQPInputCalculator
       matrixToPack.set(startIndex + 3, startIndex + 1, matrixToPack.get(startIndex + 1, startIndex + 3));
       matrixToPack.set(startIndex + 3, startIndex + 2, matrixToPack.get(startIndex + 2, startIndex + 3));
       matrixToPack.set(startIndex + 3, startIndex + 3, costWeight * 4.0 * segmentDuration);
+   }
+
+   static void populateCoMPositionTimeVector(int segment, double segmentTime, double omega, DenseMatrix64F matrixToPack)
+   {
+      int startCol = 6 * segment;
+      matrixToPack.add(0, startCol,     CoMTrajectoryPlannerTools.getCoMPositionFirstCoefficientTimeFunction(omega, segmentTime));
+      matrixToPack.add(0, startCol + 1, CoMTrajectoryPlannerTools.getCoMPositionSecondCoefficientTimeFunction(omega, segmentTime));
+      matrixToPack.add(0, startCol + 2, CoMTrajectoryPlannerTools.getCoMPositionThirdCoefficientTimeFunction(segmentTime));
+      matrixToPack.add(0, startCol + 3, CoMTrajectoryPlannerTools.getCoMPositionFourthCoefficientTimeFunction(segmentTime));
+      matrixToPack.add(0, startCol + 4, CoMTrajectoryPlannerTools.getCoMPositionFifthCoefficientTimeFunction(segmentTime));
+      matrixToPack.add(0, startCol + 5, CoMTrajectoryPlannerTools.getCoMPositionSixthCoefficientTimeFunction());
+   }
+
+   static void populateCoMVelocityTimeVector(int segment, double segmentTime, double omega, DenseMatrix64F matrixToPack)
+   {
+      int startCol = 6 * segment;
+      matrixToPack.add(0, startCol,     CoMTrajectoryPlannerTools.getCoMVelocityFirstCoefficientTimeFunction(omega, segmentTime));
+      matrixToPack.add(0, startCol + 1, CoMTrajectoryPlannerTools.getCoMVelocitySecondCoefficientTimeFunction(omega, segmentTime));
+      matrixToPack.add(0, startCol + 2, CoMTrajectoryPlannerTools.getCoMVelocityThirdCoefficientTimeFunction(segmentTime));
+      matrixToPack.add(0, startCol + 3, CoMTrajectoryPlannerTools.getCoMVelocityFourthCoefficientTimeFunction(segmentTime));
+      matrixToPack.add(0, startCol + 4, CoMTrajectoryPlannerTools.getCoMVelocityFifthCoefficientTimeFunction());
+      matrixToPack.add(0, startCol + 5, CoMTrajectoryPlannerTools.getCoMVelocitySixthCoefficientTimeFunction());
+   }
+
+   static void populateCoMAccelerationTimeVector(int segment, double segmentTime, double omega, DenseMatrix64F matrixToPack)
+   {
+      int startCol = 6 * segment;
+      matrixToPack.add(0, startCol,     CoMTrajectoryPlannerTools.getCoMAccelerationFirstCoefficientTimeFunction(omega, segmentTime));
+      matrixToPack.add(0, startCol + 1, CoMTrajectoryPlannerTools.getCoMAccelerationSecondCoefficientTimeFunction(omega, segmentTime));
+      matrixToPack.add(0, startCol + 2, CoMTrajectoryPlannerTools.getCoMAccelerationThirdCoefficientTimeFunction(segmentTime));
+      matrixToPack.add(0, startCol + 3, CoMTrajectoryPlannerTools.getCoMAccelerationFourthCoefficientTimeFunction());
+      matrixToPack.add(0, startCol + 4, CoMTrajectoryPlannerTools.getCoMAccelerationFifthCoefficientTimeFunction());
+      matrixToPack.add(0, startCol + 5, CoMTrajectoryPlannerTools.getCoMAccelerationSixthCoefficientTimeFunction());
    }
 }
