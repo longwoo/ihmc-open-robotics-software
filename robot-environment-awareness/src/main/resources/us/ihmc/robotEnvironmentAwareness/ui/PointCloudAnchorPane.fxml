@@ -33,6 +33,22 @@
                   </VBox>
                </children>
             </HBox>
+            <HBox prefHeight="70.0" prefWidth="615.0" spacing="15.0">
+               <children>
+                  <VBox alignment="CENTER" prefHeight="62.0" prefWidth="112.0" spacing="10.0">
+                     <children>
+                        <ToggleButton fx:id="enableLidar2Button" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Enable Scan" />
+                        <Button fx:id="clearLidar2Button" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#clearLidar2" text="Clear" />
+                     </children>
+                  </VBox>
+                  <VBox>
+                     <children>
+                        <Label text="Number of scans:" />
+                        <Slider fx:id="scan2HistorySizeSlider" blockIncrement="1.0" majorTickUnit="50.0" max="1000.0" minorTickCount="1" prefHeight="38.0" prefWidth="492.0" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="50.0" />
+                     </children>
+                  </VBox>
+               </children>
+            </HBox>
             <VBox prefHeight="70.0" prefWidth="615.0" spacing="10.0">
                <children>
                   <HBox prefHeight="74.0" prefWidth="615.0">

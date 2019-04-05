@@ -36,6 +36,7 @@ public class REAMeshViewer
 
    private final List<ScheduledFuture<?>> meshBuilderScheduledFutures = new ArrayList<>();
    private final MeshView lidarBufferOcTreeMeshView = new MeshView();
+   private final MeshView lidar2BufferOcTreeMeshView = new MeshView();
    private final MeshView stereoVisionBufferOcTreeMeshView = new MeshView();
    private final MeshView planarRegionMeshView = new MeshView();
    private final MeshView intersectionsMeshView = new MeshView();
@@ -45,8 +46,9 @@ public class REAMeshViewer
    private final AnimationTimer renderMeshAnimation;
 
    private final LidarScanViewer lidarScanViewer;
+   private final LidarScanViewer lidar2ScanViewer;
    private final StereoVisionPointCloudViewer stereoVisionPointCloudViewer;
-   private final BufferOctreeMeshBuilder lidarBufferOctreeMeshBuilder, stereoVisionBufferOctreeMeshBuilder;
+   private final BufferOctreeMeshBuilder lidarBufferOctreeMeshBuilder, lidar2BufferOctreeMeshBuilder, stereoVisionBufferOctreeMeshBuilder;
    private final OcTreeMeshBuilder ocTreeViewer;
    private final PlanarRegionsMeshBuilder planarRegionsMeshBuilder;
    private final PlanarRegionsIntersectionsMeshBuilder intersectionsMeshBuilder;
@@ -55,10 +57,15 @@ public class REAMeshViewer
    public REAMeshViewer(REAUIMessager uiMessager)
    {
       // TEST Communication over network
-      lidarScanViewer = new LidarScanViewer(REAModuleAPI.LidarScanState, uiMessager);
+      lidarScanViewer = new LidarScanViewer(REAModuleAPI.LidarScanState, REAModuleAPI.UILidarScanSize, REAModuleAPI.UILidarScanShow,
+                                            REAModuleAPI.UILidarScanClear, uiMessager);
+      lidar2ScanViewer = new LidarScanViewer(REAModuleAPI.Lidar2ScanState, REAModuleAPI.UILidar2ScanSize, REAModuleAPI.UILidar2ScanShow,
+                                             REAModuleAPI.UILidar2ScanClear, uiMessager);
       stereoVisionPointCloudViewer = new StereoVisionPointCloudViewer(REAModuleAPI.StereoVisionPointCloudState, uiMessager);
       lidarBufferOctreeMeshBuilder = new BufferOctreeMeshBuilder(uiMessager, REAModuleAPI.UIOcTreeShowLidarBuffer, REAModuleAPI.RequestLidarBuffer,
                                                                  REAModuleAPI.LidarBufferState, Color.DARKRED);
+      lidar2BufferOctreeMeshBuilder = new BufferOctreeMeshBuilder(uiMessager, REAModuleAPI.UIOcTreeShowLidar2Buffer, REAModuleAPI.RequestLidar2Buffer,
+                                                                 REAModuleAPI.Lidar2BufferState, Color.DARKCYAN);
       stereoVisionBufferOctreeMeshBuilder = new BufferOctreeMeshBuilder(uiMessager, REAModuleAPI.UIOcTreeShowStereoVisionBuffer,
                                                                         REAModuleAPI.RequestStereoVisionBuffer, REAModuleAPI.StereoVisionBufferState,
                                                                         Color.DARKORANGE);
@@ -69,14 +76,17 @@ public class REAMeshViewer
 
       Node lidarScanRootNode = lidarScanViewer.getRoot();
       lidarScanRootNode.setMouseTransparent(true);
+      Node lidar2ScanRootNode = lidar2ScanViewer.getRoot();
+      lidar2ScanRootNode.setMouseTransparent(true);
       Node stereoVisionPointCloudRootNode = stereoVisionPointCloudViewer.getRoot();
       stereoVisionPointCloudRootNode.setMouseTransparent(true);
       lidarBufferOcTreeMeshView.setMouseTransparent(true);
+      lidar2BufferOcTreeMeshView.setMouseTransparent(true);
       stereoVisionBufferOcTreeMeshView.setMouseTransparent(true);
       ocTreeViewer.getRoot().setMouseTransparent(true);
       boundingBoxMeshView.setMouseTransparent(true);
-      root.getChildren().addAll(lidarScanRootNode, stereoVisionPointCloudRootNode, lidarBufferOcTreeMeshView, stereoVisionBufferOcTreeMeshView,
-                                ocTreeViewer.getRoot(), planarRegionMeshView, intersectionsMeshView, boundingBoxMeshView);
+      root.getChildren().addAll(lidarScanRootNode, stereoVisionPointCloudRootNode, lidarBufferOcTreeMeshView, lidar2BufferOcTreeMeshView,
+                                stereoVisionBufferOcTreeMeshView, ocTreeViewer.getRoot(), planarRegionMeshView, intersectionsMeshView, boundingBoxMeshView);
 
       renderMeshAnimation = new AnimationTimer()
       {
@@ -84,11 +94,15 @@ public class REAMeshViewer
          public void handle(long now)
          {
             lidarScanViewer.render();
+            lidar2ScanViewer.render();
             stereoVisionPointCloudViewer.render();
             ocTreeViewer.render();
 
             if (lidarBufferOctreeMeshBuilder.hasNewMeshAndMaterial())
                updateMeshView(lidarBufferOcTreeMeshView, lidarBufferOctreeMeshBuilder.pollMeshAndMaterial());
+
+            if (lidar2BufferOctreeMeshBuilder.hasNewMeshAndMaterial())
+               updateMeshView(lidar2BufferOcTreeMeshView, lidar2BufferOctreeMeshBuilder.pollMeshAndMaterial());
 
             if (stereoVisionBufferOctreeMeshBuilder.hasNewMeshAndMaterial())
                updateMeshView(stereoVisionBufferOcTreeMeshView, stereoVisionBufferOctreeMeshBuilder.pollMeshAndMaterial());
@@ -117,6 +131,7 @@ public class REAMeshViewer
       meshBuilderScheduledFutures.add(executorService.scheduleAtFixedRate(lidarScanViewer, 0, HIGH_PACE_UPDATE_PERIOD, TimeUnit.MILLISECONDS));
       meshBuilderScheduledFutures.add(executorService.scheduleAtFixedRate(stereoVisionPointCloudViewer, 0, HIGH_PACE_UPDATE_PERIOD, TimeUnit.MILLISECONDS));
       meshBuilderScheduledFutures.add(executorService.scheduleAtFixedRate(lidarBufferOctreeMeshBuilder, 0, HIGH_PACE_UPDATE_PERIOD, TimeUnit.MILLISECONDS));
+      meshBuilderScheduledFutures.add(executorService.scheduleAtFixedRate(lidar2BufferOctreeMeshBuilder, 0, HIGH_PACE_UPDATE_PERIOD, TimeUnit.MILLISECONDS));
       meshBuilderScheduledFutures.add(executorService.scheduleAtFixedRate(stereoVisionBufferOctreeMeshBuilder, 0, HIGH_PACE_UPDATE_PERIOD,
                                                                           TimeUnit.MILLISECONDS));
       meshBuilderScheduledFutures.add(executorService.scheduleAtFixedRate(ocTreeViewer, 0, SLOW_PACE_UPDATE_PERIOD, TimeUnit.MILLISECONDS));

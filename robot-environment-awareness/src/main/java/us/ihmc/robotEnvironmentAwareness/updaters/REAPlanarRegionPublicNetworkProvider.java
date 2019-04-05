@@ -21,7 +21,7 @@ public class REAPlanarRegionPublicNetworkProvider
 
    private final RegionFeaturesProvider regionFeaturesProvider;
 
-   private final AtomicReference<Boolean> isRunning, hasCleared, isUsingLidar, isUsingStereoVision;
+   private final AtomicReference<Boolean> isRunning, hasCleared, isUsingLidar, isUsingLidar2, isUsingStereoVision;
    private final AtomicReference<Double> minRange;
    private final AtomicReference<Double> maxRange;
    private final AtomicReference<BoundingBoxParametersMessage> boundingBoxParameters;
@@ -40,6 +40,7 @@ public class REAPlanarRegionPublicNetworkProvider
          // This should be the only input with a default value, the rest gets populated at the very start.
          hasCleared = messager.createInput(REAModuleAPI.OcTreeClear, false);
          isUsingLidar = messager.createInput(REAModuleAPI.LidarBufferEnable);
+         isUsingLidar2 = messager.createInput(REAModuleAPI.Lidar2BufferEnable);
          isUsingStereoVision = messager.createInput(REAModuleAPI.StereoVisionBufferEnable);
          minRange = messager.createInput(REAModuleAPI.LidarMinRange);
          maxRange = messager.createInput(REAModuleAPI.LidarMaxRange);
@@ -51,6 +52,7 @@ public class REAPlanarRegionPublicNetworkProvider
          isRunning = null;
          hasCleared = null;
          isUsingLidar = null;
+         isUsingLidar2 = null;
          isUsingStereoVision = null;
          minRange = null;
          maxRange = null;

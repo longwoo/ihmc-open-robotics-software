@@ -38,6 +38,7 @@ public class LIDARBasedEnvironmentAwarenessUI
    private final REAUIMessager uiMessager;
    private final REAMeshViewer reaMeshViewer;
    private final LidarFrameViewer lidarFrameViewer;
+   private final LidarFrameViewer lidar2FrameViewer;
 
    @FXML
    private PointCloudAnchorPaneController pointCloudAnchorPaneController;
@@ -72,7 +73,8 @@ public class LIDARBasedEnvironmentAwarenessUI
       this.uiMessager = uiMessager;
       uiMessager.startMessager();
 
-      lidarFrameViewer = new LidarFrameViewer(uiMessager);
+      lidarFrameViewer = new LidarFrameViewer(uiMessager, REAModuleAPI.LidarScanState);
+      lidar2FrameViewer = new LidarFrameViewer(uiMessager, REAModuleAPI.Lidar2ScanState);
       reaMeshViewer = new REAMeshViewer(uiMessager);
       new PlanarRegionSegmentationDataExporter(uiMessager); // No need to anything with it beside instantiating it.
       new PlanarRegionDataExporter(uiMessager); // No need to anything with it beside instantiating it.
@@ -86,6 +88,7 @@ public class LIDARBasedEnvironmentAwarenessUI
 
       view3dFactory.addNodeToView(reaMeshViewer.getRoot());
       view3dFactory.addNodeToView(lidarFrameViewer.getRoot());
+      view3dFactory.addNodeToView(lidar2FrameViewer.getRoot());
 
       uiConnectionHandler = new UIConnectionHandler(primaryStage, uiMessager);
       uiConnectionHandler.start();
@@ -143,7 +146,7 @@ public class LIDARBasedEnvironmentAwarenessUI
       regionSegmentationAnchorPaneController.setConfigurationFile(configurationFile);
       regionSegmentationAnchorPaneController.attachREAMessager(uiMessager);
       regionSegmentationAnchorPaneController.bindControls();
-      
+
       customRegionMergeAnchorPaneController.setConfigurationFile(configurationFile);
       customRegionMergeAnchorPaneController.attachREAMessager(uiMessager);
       customRegionMergeAnchorPaneController.bindControls();
@@ -173,6 +176,7 @@ public class LIDARBasedEnvironmentAwarenessUI
 
          reaMeshViewer.stop();
          lidarFrameViewer.stop();
+         lidar2FrameViewer.stop();
       }
       catch (Exception e)
       {

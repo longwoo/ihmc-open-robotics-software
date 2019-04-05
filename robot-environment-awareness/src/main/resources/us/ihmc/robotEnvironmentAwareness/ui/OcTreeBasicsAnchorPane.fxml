@@ -74,6 +74,27 @@
                   <ToggleButton fx:id="showInputLidarScanButton" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Show input scan" />
                </children>
             </VBox>
+            <VBox prefHeight="146.0" prefWidth="222.0" style="-fx-border-color: lightblue; -fx-padding: 3; -fx-border-radius: 5; -fx-border-width: 2;">
+               <children>
+                  <Label alignment="CENTER" contentDisplay="CENTER" maxWidth="1.7976931348623157E308" prefHeight="20.0" text="Lidar2 Buffer" textAlignment="CENTER">
+                     <font>
+                        <Font size="14.0" />
+                     </font>
+                  </Label>
+                  <HBox>
+                     <children>
+                        <Slider fx:id="lidar2BufferSizeSlider" blockIncrement="5000.0" majorTickUnit="10000.0" max="50000.0" prefHeight="38.0" prefWidth="218.0" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="10000.0">
+                           <tooltip>
+                              <Tooltip text="Set the capacity of the lidar 2 buffer. When the capacity is reached, the buffer is considered full." />
+                           </tooltip>
+                        </Slider>
+                     </children>
+                  </HBox>
+                  <ToggleButton fx:id="enableLidar2BufferButton" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Enable Lidar 2 Buffer" />
+                  <ToggleButton fx:id="showLidar2BufferButton" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Show buffer" />
+                  <ToggleButton fx:id="showInputLidar2ScanButton" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Show input scan" />
+               </children>
+            </VBox>
             <VBox style="-fx-border-color: lightblue; -fx-padding: 3; -fx-border-radius: 5; -fx-border-width: 2;">
                <children>
                   <Label alignment="CENTER" contentDisplay="CENTER" maxWidth="1.7976931348623157E308" text="Stereo vision Buffer" textAlignment="CENTER">

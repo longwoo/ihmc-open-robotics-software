@@ -22,13 +22,17 @@ public class LidarScanViewer extends AbstractSourceViewer<LidarScanMessage>
 {
    private final AtomicReference<Integer> numberOfScans;
    private final AtomicInteger currentScanIndex = new AtomicInteger(0);
+   private final Topic<Boolean> lidarScanShow, lidarScanClear;
 
    private static final Material defaultMaterial = new PhongMaterial(Color.DARKRED);
 
-   public LidarScanViewer(Topic<LidarScanMessage> messageState, REAUIMessager uiMessager)
+   public LidarScanViewer(Topic<LidarScanMessage> messageState, Topic<Integer> lidarScanSize, Topic<Boolean> lidarScanShow, Topic<Boolean> lidarScanClear,
+                          REAUIMessager uiMessager)
    {
       super(messageState, uiMessager);
-      numberOfScans = uiMessager.createInput(REAModuleAPI.UILidarScanSize, 50);
+      this.lidarScanShow = lidarScanShow;
+      this.lidarScanClear = lidarScanClear;
+      numberOfScans = uiMessager.createInput(lidarScanSize, 50);
    }
 
    @Override
@@ -90,12 +94,12 @@ public class LidarScanViewer extends AbstractSourceViewer<LidarScanMessage>
    @Override
    protected Topic<Boolean> createEnableInput()
    {
-      return REAModuleAPI.UILidarScanShow;
+      return lidarScanShow;
    }
 
    @Override
    protected Topic<Boolean> createClearInput()
    {
-      return REAModuleAPI.UILidarScanClear;
+      return lidarScanClear;
    }
 }

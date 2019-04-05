@@ -11,6 +11,7 @@ import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.javaFXToolkit.JavaFXTools;
 import us.ihmc.javaFXToolkit.shapes.JavaFXCoordinateSystem;
+import us.ihmc.messager.MessagerAPIFactory;
 import us.ihmc.robotEnvironmentAwareness.communication.REAModuleAPI;
 import us.ihmc.robotEnvironmentAwareness.communication.REAUIMessager;
 
@@ -22,14 +23,14 @@ public class LidarFrameViewer extends AnimationTimer
    private final AtomicReference<Affine> lastAffine = new AtomicReference<>();
 
    private final Group root = new Group();
-   public LidarFrameViewer(REAUIMessager uiMessager)
+   public LidarFrameViewer(REAUIMessager uiMessager, MessagerAPIFactory.Topic<LidarScanMessage> lidarScanStateTopic)
    {
       lidarCoordinateSystem = new JavaFXCoordinateSystem(0.1);
       lidarCoordinateSystem.getTransforms().add(lidarPose);
       root.getChildren().add(lidarCoordinateSystem);
       root.setMouseTransparent(true);
 
-      uiMessager.registerTopicListener(REAModuleAPI.LidarScanState, this::handleMessage);
+      uiMessager.registerTopicListener(lidarScanStateTopic, this::handleMessage);
       uiMessager.registerModuleMessagerStateListener(isMessagerOpen -> {
          if (isMessagerOpen)
             start();
