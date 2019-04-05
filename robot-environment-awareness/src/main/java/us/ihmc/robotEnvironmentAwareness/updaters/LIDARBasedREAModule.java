@@ -62,6 +62,7 @@ public class LIDARBasedREAModule
    private final NormalOcTree mainOctree = new NormalOcTree(OCTREE_RESOLUTION);
 
    private final REAOcTreeBuffer lidarBufferUpdater;
+   private final REAOcTreeBuffer lidar2BufferUpdater;
    private final REAOcTreeBuffer stereoVisionBufferUpdater;
    private final REAOcTreeUpdater mainUpdater;
    private final REAPlanarRegionFeatureUpdater planarRegionFeatureUpdater;
@@ -83,14 +84,18 @@ public class LIDARBasedREAModule
       lidarBufferUpdater = new REAOcTreeBuffer(mainOctree.getResolution(), reaMessager, REAModuleAPI.LidarBufferEnable, true,
                                                REAModuleAPI.LidarBufferOcTreeCapacity, 10000, REAModuleAPI.LidarBufferMessageCapacity, 500,
                                                REAModuleAPI.RequestLidarBuffer, REAModuleAPI.LidarBufferState);
+      lidar2BufferUpdater = new REAOcTreeBuffer(mainOctree.getResolution(), reaMessager, REAModuleAPI.Lidar2BufferEnable, true,
+                                                REAModuleAPI.Lidar2BufferOcTreeCapacity, 10000, REAModuleAPI.Lidar2BufferMessageCapacity, 500,
+                                                REAModuleAPI.RequestLidar2Buffer, REAModuleAPI.Lidar2BufferState);
       stereoVisionBufferUpdater = new REAOcTreeBuffer(mainOctree.getResolution(), reaMessager, REAModuleAPI.StereoVisionBufferEnable, false,
                                                       REAModuleAPI.StereoVisionBufferOcTreeCapacity, 0, REAModuleAPI.StereoVisionBufferMessageCapacity, 1,
                                                       REAModuleAPI.RequestStereoVisionBuffer, REAModuleAPI.StereoVisionBufferState);
-      REAOcTreeBuffer[] bufferUpdaters = new REAOcTreeBuffer[] {lidarBufferUpdater, stereoVisionBufferUpdater};
+      REAOcTreeBuffer[] bufferUpdaters = new REAOcTreeBuffer[] {lidarBufferUpdater, lidar2BufferUpdater, stereoVisionBufferUpdater};
       mainUpdater = new REAOcTreeUpdater(mainOctree, bufferUpdaters, reaMessager);
       planarRegionFeatureUpdater = new REAPlanarRegionFeatureUpdater(mainOctree, reaMessager);
 
       ROS2Tools.createCallbackSubscription(ros2Node, LidarScanMessage.class, "/ihmc/lidar_scan", this::dispatchLidarScanMessage);
+      ROS2Tools.createCallbackSubscription(ros2Node, LidarScanMessage.class, "/ihmc/lidar2_scan", this::dispatchLidar2ScanMessage);
       ROS2Tools.createCallbackSubscription(ros2Node, StereoVisionPointCloudMessage.class, "/ihmc/stereo_vision_point_cloud",
                                            this::dispatchStereoVisionPointCloudMessage);
       ROS2Tools.createCallbackSubscription(ros2Node, PlanarRegionsListMessage.class, subscriberCustomRegionsTopicNameGenerator,
@@ -105,6 +110,7 @@ public class LIDARBasedREAModule
       loadConfigurationFile(filePropertyHelper);
 
       reaMessager.registerTopicListener(REAModuleAPI.SaveBufferConfiguration, (content) -> lidarBufferUpdater.saveConfiguration(filePropertyHelper));
+      reaMessager.registerTopicListener(REAModuleAPI.SaveBufferConfiguration, (content) -> lidar2BufferUpdater.saveConfiguration(filePropertyHelper));
       reaMessager.registerTopicListener(REAModuleAPI.SaveBufferConfiguration, (content) -> stereoVisionBufferUpdater.saveConfiguration(filePropertyHelper));
       reaMessager.registerTopicListener(REAModuleAPI.SaveMainUpdaterConfiguration, (content) -> mainUpdater.saveConfiguration(filePropertyHelper));
       reaMessager.registerTopicListener(REAModuleAPI.SaveRegionUpdaterConfiguration,
@@ -124,6 +130,13 @@ public class LIDARBasedREAModule
       moduleStateReporter.registerLidarScanMessage(message);
       lidarBufferUpdater.handleLidarScanMessage(message);
       mainUpdater.handleLidarScanMessage(message);
+   }
+
+   private void dispatchLidar2ScanMessage(Subscriber<LidarScanMessage> subscriber)
+   {
+      LidarScanMessage message = subscriber.takeNextData();
+      moduleStateReporter.registerLidar2ScanMessage(message);
+      lidar2BufferUpdater.handleLidarScanMessage(message);
    }
 
    private void dispatchStereoVisionPointCloudMessage(Subscriber<StereoVisionPointCloudMessage> subscriber)
@@ -180,6 +193,7 @@ public class LIDARBasedREAModule
    private void loadConfigurationFile(FilePropertyHelper filePropertyHelper)
    {
       lidarBufferUpdater.loadConfiguration(filePropertyHelper);
+      lidar2BufferUpdater.loadConfiguration(filePropertyHelper);
       stereoVisionBufferUpdater.loadConfiguration(filePropertyHelper);
       mainUpdater.loadConfiguration(filePropertyHelper);
       planarRegionFeatureUpdater.loadConfiguration(filePropertyHelper);
@@ -201,6 +215,7 @@ public class LIDARBasedREAModule
          if (clearOcTree.getAndSet(false))
          {
             lidarBufferUpdater.clearBuffer();
+            lidar2BufferUpdater.clearBuffer();
             stereoVisionBufferUpdater.clearBuffer();
             mainUpdater.clearOcTree();
             planarRegionFeatureUpdater.clearOcTree();
@@ -252,6 +267,7 @@ public class LIDARBasedREAModule
       {
          scheduled = executorService.scheduleAtFixedRate(this::mainUpdate, 0, THREAD_PERIOD_MILLISECONDS, TimeUnit.MILLISECONDS);
          executorService.scheduleAtFixedRate(lidarBufferUpdater.createBufferThread(), 0, BUFFER_THREAD_PERIOD_MILLISECONDS, TimeUnit.MILLISECONDS);
+         executorService.scheduleAtFixedRate(lidar2BufferUpdater.createBufferThread(), 0, BUFFER_THREAD_PERIOD_MILLISECONDS, TimeUnit.MILLISECONDS);
          executorService.scheduleAtFixedRate(stereoVisionBufferUpdater.createBufferThread(), 0, BUFFER_THREAD_PERIOD_MILLISECONDS, TimeUnit.MILLISECONDS);
       }
    }

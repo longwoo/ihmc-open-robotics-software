@@ -57,6 +57,12 @@ public class REAModuleStateReporter
          reaMessager.submitMessage(REAModuleAPI.LidarScanState, new LidarScanMessage(message));
    }
 
+   public void registerLidar2ScanMessage(LidarScanMessage message)
+   {
+      if (reaMessager.isMessagerOpen())
+         reaMessager.submitMessage(REAModuleAPI.Lidar2ScanState, new LidarScanMessage(message));
+   }
+
    public void registerStereoVisionPointCloudMessage(StereoVisionPointCloudMessage message)
    {
       if (reaMessager.isMessagerOpen())
