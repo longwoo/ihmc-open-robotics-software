@@ -309,6 +309,7 @@ public class LidarScanPublisher
       if (collisionBoxNode != null)
          collisionBoxNode.update();
 
+      lidarSensorFrame.update();
       lidarSensorFrame.getTransformToRoot().getTranslation(lidarPosition);
 
       List<Integer> shadowRemovalIndices = scanData.computeShadowPointIndices(lidarPosition, shadowAngleThreshold);

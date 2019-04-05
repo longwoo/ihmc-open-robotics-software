@@ -24,12 +24,18 @@ public class LidarScanViewer extends AbstractSourceViewer<LidarScanMessage>
    private final AtomicInteger currentScanIndex = new AtomicInteger(0);
 
    private static final Material defaultMaterial = new PhongMaterial(Color.DARKRED);
+   private Material material = defaultMaterial;
 
    public LidarScanViewer(Topic<LidarScanMessage> messageState, Topic<Integer> lidarScanSize, Topic<Boolean> lidarScanShow, Topic<Boolean> lidarScanClear,
                           REAUIMessager uiMessager)
    {
       super(messageState, lidarScanShow, lidarScanClear, uiMessager);
       numberOfScans = uiMessager.createInput(lidarScanSize, 50);
+   }
+
+   public void setColor(Color color)
+   {
+      material = new PhongMaterial(color);
    }
 
    @Override
@@ -57,7 +63,7 @@ public class LidarScanViewer extends AbstractSourceViewer<LidarScanMessage>
             children.set(currentScanIndex.get(), newScanMeshView);
 
          for (int i = currentScanIndex.get() + 1; i < currentScanIndex.get() + children.size(); i++)
-            ((MeshView) children.get(i % children.size())).setMaterial(defaultMaterial);
+            ((MeshView) children.get(i % children.size())).setMaterial(material);
 
          currentScanIndex.set((currentScanIndex.get() + 1) % numberOfScans.get());
       }

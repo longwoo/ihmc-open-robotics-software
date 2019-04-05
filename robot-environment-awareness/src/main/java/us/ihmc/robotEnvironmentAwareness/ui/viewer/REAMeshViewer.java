@@ -74,6 +74,8 @@ public class REAMeshViewer
       intersectionsMeshBuilder = new PlanarRegionsIntersectionsMeshBuilder(uiMessager);
       boundingBoxMeshView = new BoundingBoxMeshView(uiMessager);
 
+      lidar2ScanViewer.setColor(Color.DARKCYAN);
+
       Node lidarScanRootNode = lidarScanViewer.getRoot();
       lidarScanRootNode.setMouseTransparent(true);
       Node lidar2ScanRootNode = lidar2ScanViewer.getRoot();
@@ -85,7 +87,7 @@ public class REAMeshViewer
       stereoVisionBufferOcTreeMeshView.setMouseTransparent(true);
       ocTreeViewer.getRoot().setMouseTransparent(true);
       boundingBoxMeshView.setMouseTransparent(true);
-      root.getChildren().addAll(lidarScanRootNode, stereoVisionPointCloudRootNode, lidarBufferOcTreeMeshView, lidar2BufferOcTreeMeshView,
+      root.getChildren().addAll(lidarScanRootNode, lidar2ScanRootNode, stereoVisionPointCloudRootNode, lidarBufferOcTreeMeshView, lidar2BufferOcTreeMeshView,
                                 stereoVisionBufferOcTreeMeshView, ocTreeViewer.getRoot(), planarRegionMeshView, intersectionsMeshView, boundingBoxMeshView);
 
       renderMeshAnimation = new AnimationTimer()
@@ -129,6 +131,7 @@ public class REAMeshViewer
          return;
       renderMeshAnimation.start();
       meshBuilderScheduledFutures.add(executorService.scheduleAtFixedRate(lidarScanViewer, 0, HIGH_PACE_UPDATE_PERIOD, TimeUnit.MILLISECONDS));
+      meshBuilderScheduledFutures.add(executorService.scheduleAtFixedRate(lidar2ScanViewer, 0, HIGH_PACE_UPDATE_PERIOD, TimeUnit.MILLISECONDS));
       meshBuilderScheduledFutures.add(executorService.scheduleAtFixedRate(stereoVisionPointCloudViewer, 0, HIGH_PACE_UPDATE_PERIOD, TimeUnit.MILLISECONDS));
       meshBuilderScheduledFutures.add(executorService.scheduleAtFixedRate(lidarBufferOctreeMeshBuilder, 0, HIGH_PACE_UPDATE_PERIOD, TimeUnit.MILLISECONDS));
       meshBuilderScheduledFutures.add(executorService.scheduleAtFixedRate(lidar2BufferOctreeMeshBuilder, 0, HIGH_PACE_UPDATE_PERIOD, TimeUnit.MILLISECONDS));
