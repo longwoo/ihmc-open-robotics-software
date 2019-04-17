@@ -55,7 +55,6 @@ public class OccupancyMapRenderer extends AnimationTimer
             .registerTopicListener(FootstepPlannerMessagerAPI.OccupancyMapTopic, message -> executorService.execute(() -> processOccupancyMapMessage(message)));
       messager.registerTopicListener(FootstepPlannerMessagerAPI.PlanarRegionDataTopic, planarRegionsList::set);
       this.show = messager.createInput(FootstepPlannerMessagerAPI.ShowOccupancyMap, true);
-      messager.registerTopicListener(FootstepPlannerMessagerAPI.PlanarRegionDataTopic, data -> reset.set(true));
       messager.registerTopicListener(FootstepPlannerMessagerAPI.ComputePathTopic, data -> reset.set(true));
 
       cellPolygon.addVertex(cellWidth, 0.0);
