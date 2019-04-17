@@ -156,7 +156,7 @@ public class FootstepPlanningStage implements FootstepPlanner
       DistanceAndYawBasedHeuristics heuristics = new DistanceAndYawBasedHeuristics(footstepPlanningParameters.getCostParameters().getAStarHeuristicsWeight(),
                                                                                    footstepPlanningParameters);
 
-      StagePlannerListener plannerListener = new StagePlannerListener(snapper, multiStageListener.getBroadcastDt());
+      StagePlannerListener plannerListener = new StagePlannerListener();
       FootstepNodeChecker nodeChecker = new FootstepNodeCheckerOfCheckers(Arrays.asList(snapBasedNodeChecker, bodyCollisionNodeChecker, cliffAvoider));
       nodeChecker.addPlannerListener(plannerListener);
       multiStageListener.addStagePlannerListener(plannerListener);

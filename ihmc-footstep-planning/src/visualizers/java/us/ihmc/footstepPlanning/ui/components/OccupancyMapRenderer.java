@@ -3,6 +3,7 @@ package us.ihmc.footstepPlanning.ui.components;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import controller_msgs.msg.dds.FootstepPlannerCellMessage;
@@ -25,6 +26,7 @@ import us.ihmc.footstepPlanning.graphSearch.graph.LatticeNode;
 import us.ihmc.idl.IDLSequence.Object;
 import us.ihmc.javaFXToolkit.shapes.JavaFXMultiColorMeshBuilder;
 import us.ihmc.javaFXToolkit.shapes.TextureColorAdaptivePalette;
+import us.ihmc.log.LogTools;
 import us.ihmc.messager.Messager;
 import us.ihmc.pathPlanning.visibilityGraphs.tools.PlanarRegionTools;
 import us.ihmc.robotics.geometry.PlanarRegionsList;
@@ -44,9 +46,11 @@ public class OccupancyMapRenderer extends AnimationTimer
    private final AtomicReference<PlanarRegionsList> planarRegionsList = new AtomicReference<>(null);
    private final AtomicReference<Boolean> show;
    private final AtomicBoolean reset = new AtomicBoolean(false);
+   private final AtomicInteger planId = new AtomicInteger(-1);
 
    private final MeshView footstepGraphMeshView = new MeshView();
    private final TextureColorAdaptivePalette palette = new TextureColorAdaptivePalette(1024, false);
+   private final JavaFXMultiColorMeshBuilder meshBuilder = new JavaFXMultiColorMeshBuilder(palette);
    private final ConvexPolygon2D cellPolygon = new ConvexPolygon2D();
 
    public OccupancyMapRenderer(Messager messager)
@@ -71,7 +75,10 @@ public class OccupancyMapRenderer extends AnimationTimer
    private void processOccupancyMapMessage(FootstepPlannerOccupancyMapMessage message)
    {
       palette.clearPalette();
-      JavaFXMultiColorMeshBuilder meshBuilder = new JavaFXMultiColorMeshBuilder(palette);
+      if(message.getSequenceId() != planId.get())
+      {
+         meshBuilder.clear();
+      }
 
       Object<FootstepPlannerCellMessage> occupiedCells = message.getOccupiedCells();
       for (int i = 0; i < occupiedCells.size(); i++)
@@ -90,6 +97,7 @@ public class OccupancyMapRenderer extends AnimationTimer
       }
 
       footstepGraphToRender.set(new Pair<>(meshBuilder.generateMesh(), meshBuilder.generateMaterial()));
+      planId.set((int) message.getSequenceId());
    }
 
    private double getHeightAtPoint(double x, double y)
