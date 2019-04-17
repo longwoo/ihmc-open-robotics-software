@@ -17,11 +17,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class MultiStagePlannerListener implements BipedalFootstepPlannerListener
 {
    private final StatusMessageOutputManager statusMessageOutputManager;
 
+   private final AtomicInteger planId = new AtomicInteger();
    private final FootstepPlannerOccupancyMapMessage occupancyMapMessage = new FootstepPlannerOccupancyMapMessage();
    private final FootstepNodeDataListMessage nodeDataListMessage = new FootstepNodeDataListMessage();
 
@@ -44,6 +46,11 @@ public class MultiStagePlannerListener implements BipedalFootstepPlannerListener
    public void addStagePlannerListener(StagePlannerListener listener)
    {
       listeners.add(listener);
+   }
+
+   public void setPlanId(int planId)
+   {
+      this.planId.set(planId);
    }
 
    @Override
@@ -105,10 +112,6 @@ public class MultiStagePlannerListener implements BipedalFootstepPlannerListener
       }
 
       broadcastOccupancyMap(occupancyMapMessage);
-
-      if (!nodeData.isEmpty())
-         broadcastNodeData(nodeDataListMessage);
-
       lastBroadcastTime = currentTime;
    }
 
@@ -128,14 +131,10 @@ public class MultiStagePlannerListener implements BipedalFootstepPlannerListener
       broadcastOccupancyMap(occupancyMapMessage);
    }
 
-   private void broadcastNodeData(FootstepNodeDataListMessage message)
-   {
-//      statusMessageOutputManager.reportStatusMessage(message);
-   }
-
    private void broadcastOccupancyMap(FootstepPlannerOccupancyMapMessage message)
    {
-//      statusMessageOutputManager.reportStatusMessage(message);
+      message.setSequenceId(planId.get());
+      statusMessageOutputManager.reportStatusMessage(message);
    }
 
 }

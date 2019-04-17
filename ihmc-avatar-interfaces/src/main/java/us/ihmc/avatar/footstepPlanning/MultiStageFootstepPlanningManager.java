@@ -472,6 +472,7 @@ public class MultiStageFootstepPlanningManager implements PlannerCompletionCallb
       isDonePlanningPath.set(false);
       latestRequestReference.set(request);
       waitingForPlanningRequest.set(false);
+      plannerListener.setPlanId(request.getPlannerRequestId());
    }
 
    public void processFootstepPlannerParameters(FootstepPlannerParametersPacket parameters)
