@@ -37,3 +37,5 @@ PlanarRegionsListMessage planar_regions_list_message
 bool assume_flat_ground
 # Set this id to keep track of your request
 int32 planner_request_id -1
+# If true, the planner will stream `FootstepPlannerOccupancyMapMessage`s while planning
+bool request_occupancy_messages

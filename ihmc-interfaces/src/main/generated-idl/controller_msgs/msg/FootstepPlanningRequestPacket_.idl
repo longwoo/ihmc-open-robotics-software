@@ -95,6 +95,10 @@ module controller_msgs
          */
         @defaultValue(value=-1)
         long planner_request_id;
+        /**
+         * If true, the planner will stream `FootstepPlannerOccupancyMapMessage`s while planning
+         */
+        boolean request_occupancy_messages;
       };
     };
   };

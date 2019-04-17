@@ -70,6 +70,10 @@ public class FootstepPlanningRequestPacket extends Packet<FootstepPlanningReques
             * Set this id to keep track of your request
             */
    public int planner_request_id_ = -1;
+   /**
+            * If true, the planner will stream `FootstepPlannerOccupancyMapMessage`s while planning
+            */
+   public boolean request_occupancy_messages_;
 
    public FootstepPlanningRequestPacket()
    {
@@ -106,6 +110,8 @@ public class FootstepPlanningRequestPacket extends Packet<FootstepPlanningReques
       assume_flat_ground_ = other.assume_flat_ground_;
 
       planner_request_id_ = other.planner_request_id_;
+
+      request_occupancy_messages_ = other.request_occupancy_messages_;
 
    }
 
@@ -259,6 +265,21 @@ public class FootstepPlanningRequestPacket extends Packet<FootstepPlanningReques
       return planner_request_id_;
    }
 
+   /**
+            * If true, the planner will stream `FootstepPlannerOccupancyMapMessage`s while planning
+            */
+   public void setRequestOccupancyMessages(boolean request_occupancy_messages)
+   {
+      request_occupancy_messages_ = request_occupancy_messages;
+   }
+   /**
+            * If true, the planner will stream `FootstepPlannerOccupancyMapMessage`s while planning
+            */
+   public boolean getRequestOccupancyMessages()
+   {
+      return request_occupancy_messages_;
+   }
+
 
    public static Supplier<FootstepPlanningRequestPacketPubSubType> getPubSubType()
    {
@@ -296,6 +317,8 @@ public class FootstepPlanningRequestPacket extends Packet<FootstepPlanningReques
 
       if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.planner_request_id_, other.planner_request_id_, epsilon)) return false;
 
+      if (!us.ihmc.idl.IDLTools.epsilonEqualsBoolean(this.request_occupancy_messages_, other.request_occupancy_messages_, epsilon)) return false;
+
 
       return true;
    }
@@ -327,6 +350,8 @@ public class FootstepPlanningRequestPacket extends Packet<FootstepPlanningReques
       if(this.assume_flat_ground_ != otherMyClass.assume_flat_ground_) return false;
 
       if(this.planner_request_id_ != otherMyClass.planner_request_id_) return false;
+
+      if(this.request_occupancy_messages_ != otherMyClass.request_occupancy_messages_) return false;
 
 
       return true;
@@ -361,7 +386,9 @@ public class FootstepPlanningRequestPacket extends Packet<FootstepPlanningReques
       builder.append("assume_flat_ground=");
       builder.append(this.assume_flat_ground_);      builder.append(", ");
       builder.append("planner_request_id=");
-      builder.append(this.planner_request_id_);
+      builder.append(this.planner_request_id_);      builder.append(", ");
+      builder.append("request_occupancy_messages=");
+      builder.append(this.request_occupancy_messages_);
       builder.append("}");
       return builder.toString();
    }

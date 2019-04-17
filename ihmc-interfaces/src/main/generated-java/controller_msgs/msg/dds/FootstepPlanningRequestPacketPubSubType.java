@@ -64,6 +64,8 @@ public class FootstepPlanningRequestPacketPubSubType implements us.ihmc.pubsub.T
 
       current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4);
 
+      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
+
 
       return current_alignment - initial_alignment;
    }
@@ -108,6 +110,9 @@ public class FootstepPlanningRequestPacketPubSubType implements us.ihmc.pubsub.T
       current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4);
 
 
+      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
+
+
 
       return current_alignment - initial_alignment;
    }
@@ -133,6 +138,8 @@ public class FootstepPlanningRequestPacketPubSubType implements us.ihmc.pubsub.T
 
       cdr.write_type_2(data.getPlannerRequestId());
 
+      cdr.write_type_7(data.getRequestOccupancyMessages());
+
    }
 
    public static void read(controller_msgs.msg.dds.FootstepPlanningRequestPacket data, us.ihmc.idl.CDR cdr)
@@ -155,6 +162,8 @@ public class FootstepPlanningRequestPacketPubSubType implements us.ihmc.pubsub.T
       data.setAssumeFlatGround(cdr.read_type_7());
       	
       data.setPlannerRequestId(cdr.read_type_2());
+      	
+      data.setRequestOccupancyMessages(cdr.read_type_7());
       	
 
    }
@@ -179,6 +188,7 @@ public class FootstepPlanningRequestPacketPubSubType implements us.ihmc.pubsub.T
 
       ser.write_type_7("assume_flat_ground", data.getAssumeFlatGround());
       ser.write_type_2("planner_request_id", data.getPlannerRequestId());
+      ser.write_type_7("request_occupancy_messages", data.getRequestOccupancyMessages());
    }
 
    @Override
@@ -201,6 +211,7 @@ public class FootstepPlanningRequestPacketPubSubType implements us.ihmc.pubsub.T
 
       data.setAssumeFlatGround(ser.read_type_7("assume_flat_ground"));
       data.setPlannerRequestId(ser.read_type_2("planner_request_id"));
+      data.setRequestOccupancyMessages(ser.read_type_7("request_occupancy_messages"));
    }
 
    public static void staticCopy(controller_msgs.msg.dds.FootstepPlanningRequestPacket src, controller_msgs.msg.dds.FootstepPlanningRequestPacket dest)

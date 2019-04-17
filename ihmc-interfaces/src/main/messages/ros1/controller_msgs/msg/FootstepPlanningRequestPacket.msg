@@ -54,4 +54,7 @@ bool assume_flat_ground
 # Field default value -1
 int32 planner_request_id
 
+# If true, the planner will stream `FootstepPlannerOccupancyMapMessage`s while planning
+bool request_occupancy_messages
+
 
