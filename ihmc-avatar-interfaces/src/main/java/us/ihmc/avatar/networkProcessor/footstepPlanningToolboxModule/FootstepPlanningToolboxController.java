@@ -32,7 +32,6 @@ import us.ihmc.footstepPlanning.*;
 import us.ihmc.footstepPlanning.graphSearch.collision.FootstepNodeBodyCollisionDetector;
 import us.ihmc.footstepPlanning.graphSearch.footstepSnapping.FootstepNodeSnapAndWiggler;
 import us.ihmc.footstepPlanning.graphSearch.footstepSnapping.SimplePlanarRegionFootstepNodeSnapper;
-import us.ihmc.footstepPlanning.graphSearch.graph.visualization.RosBasedPlannerListener;
 import us.ihmc.footstepPlanning.graphSearch.heuristics.DistanceAndYawBasedHeuristics;
 import us.ihmc.footstepPlanning.graphSearch.nodeChecking.BodyCollisionNodeChecker;
 import us.ihmc.footstepPlanning.graphSearch.nodeChecking.FootstepNodeChecker;
@@ -155,17 +154,9 @@ public class FootstepPlanningToolboxController extends ToolboxController
       costBuilder.setIncludePitchAndRollCost(true);
 
       FootstepCost footstepCost = costBuilder.buildCost();
+      return new AStarFootstepPlanner(footstepPlanningParameters, nodeChecker, heuristics, expansion, footstepCost, postProcessingSnapper, null, footPolygons,
+                                      registry);
 
-      long updateFrequency = 1000;
-      RosBasedPlannerListener plannerListener = new RosBasedPlannerListener(statusOutputManager, snapper, updateFrequency);
-
-      snapBasedNodeChecker.addPlannerListener(plannerListener);
-      bodyCollisionNodeChecker.addPlannerListener(plannerListener);
-
-      AStarFootstepPlanner planner = new AStarFootstepPlanner(footstepPlanningParameters, nodeChecker, heuristics, expansion, footstepCost,
-                                                              postProcessingSnapper, plannerListener, footPolygons, registry);
-
-      return planner;
    }
 
    private DepthFirstFootstepPlanner createPlanarRegionBipedalPlanner(SideDependentList<ConvexPolygon2D> footPolygonsInSoleFrame)
