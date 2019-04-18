@@ -26,7 +26,6 @@ import us.ihmc.footstepPlanning.graphSearch.graph.LatticeNode;
 import us.ihmc.idl.IDLSequence.Object;
 import us.ihmc.javaFXToolkit.shapes.JavaFXMultiColorMeshBuilder;
 import us.ihmc.javaFXToolkit.shapes.TextureColorAdaptivePalette;
-import us.ihmc.log.LogTools;
 import us.ihmc.messager.Messager;
 import us.ihmc.pathPlanning.visibilityGraphs.tools.PlanarRegionTools;
 import us.ihmc.robotics.geometry.PlanarRegionsList;
@@ -36,8 +35,7 @@ public class OccupancyMapRenderer extends AnimationTimer
    private static final double cellWidth = 0.02;
    private static final double nodeOffsetZ = 0.05;
    private static final double cellOpacity = 0.9;
-   private static final Color validCellColor = Color.rgb(219, 124, 87, cellOpacity);
-   private static final Color rejectedCellColor = Color.rgb(139, 0, 0, cellOpacity);
+   private static final Color cellColor = Color.rgb(219, 124, 87, cellOpacity);
 
    private ExecutorService executorService = Executors.newSingleThreadExecutor(ThreadTools.getNamedThreadFactory(getClass().getSimpleName()));
 
@@ -90,10 +88,7 @@ public class OccupancyMapRenderer extends AnimationTimer
          RigidBodyTransform transform = new RigidBodyTransform();
          transform.setTranslation(x, y, z);
 
-         if (cell.getNodeIsValid())
-            meshBuilder.addPolygon(transform, cellPolygon, validCellColor);
-         else
-            meshBuilder.addPolygon(transform, cellPolygon, rejectedCellColor);
+         meshBuilder.addPolygon(transform, cellPolygon, cellColor);
       }
 
       footstepGraphToRender.set(new Pair<>(meshBuilder.generateMesh(), meshBuilder.generateMaterial()));

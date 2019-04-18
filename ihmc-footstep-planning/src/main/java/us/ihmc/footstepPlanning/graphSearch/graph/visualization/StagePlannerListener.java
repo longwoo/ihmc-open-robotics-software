@@ -4,7 +4,6 @@ import controller_msgs.msg.dds.FootstepPlannerCellMessage;
 import controller_msgs.msg.dds.FootstepPlannerOccupancyMapMessage;
 import us.ihmc.footstepPlanning.graphSearch.graph.FootstepNode;
 import us.ihmc.footstepPlanning.graphSearch.listeners.BipedalFootstepPlannerListener;
-import us.ihmc.log.LogTools;
 
 import java.util.HashSet;
 import java.util.List;
@@ -12,7 +11,6 @@ import java.util.List;
 public class StagePlannerListener implements BipedalFootstepPlannerListener
 {
    private final HashSet<PlannerCell> exploredCells = new HashSet<>();
-   private final HashSet<PlannerCell> rejectedCells = new HashSet<>();
 
    @Override
    public void addNode(FootstepNode node, FootstepNode previousNode)
@@ -20,11 +18,7 @@ public class StagePlannerListener implements BipedalFootstepPlannerListener
       synchronized (this)
       {
          if (previousNode == null)
-         {
-            rejectedCells.clear();
             exploredCells.clear();
-         }
-
          exploredCells.add(new PlannerCell(node.getXIndex(), node.getYIndex()));
       }
    }
@@ -37,10 +31,6 @@ public class StagePlannerListener implements BipedalFootstepPlannerListener
    @Override
    public void rejectNode(FootstepNode rejectedNode, FootstepNode parentNode, BipedalFootstepPlannerNodeRejectionReason reason)
    {
-      synchronized (this)
-      {
-         rejectedCells.add(new PlannerCell(rejectedNode.getXIndex(), rejectedNode.getYIndex()));
-      }
    }
 
    @Override
@@ -57,16 +47,14 @@ public class StagePlannerListener implements BipedalFootstepPlannerListener
    {
       synchronized (this)
       {
-         for(PlannerCell plannerCell : exploredCells)
+         for (PlannerCell plannerCell : exploredCells)
          {
             FootstepPlannerCellMessage cell = message.getOccupiedCells().add();
             cell.setXIndex(plannerCell.xIndex);
             cell.setYIndex(plannerCell.yIndex);
-            cell.setNodeIsValid(!rejectedCells.contains(plannerCell));
          }
 
          exploredCells.clear();
-         rejectedCells.clear();
       }
    }
 }
