@@ -101,11 +101,9 @@ public class SwingOverPlanarRegionsTrajectoryExpander
                                                    YoGraphicsListRegistry graphicsListRegistry)
    {
       String namePrefix = "trajectoryExpander";
-      twoWaypointSwingGenerator = new TwoWaypointSwingGenerator(namePrefix,
-                                                                walkingControllerParameters.getSteppingParameters().getMinSwingHeightFromStanceFoot(),
-                                                                walkingControllerParameters.getSteppingParameters().getMaxSwingHeightFromStanceFoot(),
-                                                                walkingControllerParameters.getSteppingParameters().getMinSwingHeightFromStanceFoot(),
-                                                                parentRegistry, graphicsListRegistry);
+      SwingTrajectoryParameters swingTrajectoryParameters = walkingControllerParameters.getSwingTrajectoryParameters();
+      twoWaypointSwingGenerator = new TwoWaypointSwingGenerator(namePrefix, walkingControllerParameters.getSteppingParameters().getMinSwingHeightFromStanceFoot(),
+            walkingControllerParameters.getSteppingParameters().getMaxSwingHeightFromStanceFoot(), parentRegistry, graphicsListRegistry);
       minimumSwingHeight = walkingControllerParameters.getSteppingParameters().getMinSwingHeightFromStanceFoot();
       maximumSwingHeight = walkingControllerParameters.getSteppingParameters().getMaxSwingHeightFromStanceFoot();
       collisionSphereRadius = walkingControllerParameters.getSteppingParameters().getActualFootLength() / 2.0;

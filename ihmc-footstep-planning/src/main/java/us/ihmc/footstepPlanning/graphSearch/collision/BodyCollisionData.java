@@ -12,12 +12,6 @@ public class BodyCollisionData
     */
    private double distanceFromBoundingBox = Double.NaN;
 
-   /**
-    * Distance of closest detected points along the x-axis if no collision is detected. Used to translate footstep away from near collisions
-    */
-   private double distanceOfClosestPointInFront = Double.NaN;
-   private double distanceOfClosestPointInBack = Double.NaN;
-
    public boolean isCollisionDetected()
    {
       return collisionDetected;
@@ -36,25 +30,5 @@ public class BodyCollisionData
    public double getDistanceFromBoundingBox()
    {
       return distanceFromBoundingBox;
-   }
-
-   public double getDistanceOfClosestPointInFront()
-   {
-      return distanceOfClosestPointInFront;
-   }
-
-   public double getDistanceOfClosestPointInBack()
-   {
-      return distanceOfClosestPointInBack;
-   }
-
-   public void setDistanceOfClosestPointInFront(double distanceOfClosestPointInFront)
-   {
-      this.distanceOfClosestPointInFront = distanceOfClosestPointInFront;
-   }
-
-   public void setDistanceOfClosestPointInBack(double distanceOfClosestPointInBack)
-   {
-      this.distanceOfClosestPointInBack = distanceOfClosestPointInBack;
    }
 }

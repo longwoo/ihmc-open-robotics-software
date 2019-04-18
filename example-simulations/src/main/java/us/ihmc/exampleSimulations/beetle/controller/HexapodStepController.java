@@ -110,12 +110,7 @@ public class HexapodStepController
          footInShinFrame.changeFrame(shinRigidBody.getBodyFixedFrame());
          shinRigidBodies.set(robotSextant, shinRigidBody);
          rigidBodiesToControl[i] = shinRigidBody;
-
-         double minSwingHeight = 0.02;
-         double maxSwingHeight = groundClearance.getDoubleValue();
-         double defaultSwingHeight = 0.02;
-
-         swingTrajectoryGenerators.set(robotSextant, new TwoWaypointSwingGenerator(name, minSwingHeight, maxSwingHeight, defaultSwingHeight, registry, yoGraphicsListRegistry));
+         swingTrajectoryGenerators.set(robotSextant, new TwoWaypointSwingGenerator(name, 0.02, groundClearance.getDoubleValue(), registry, yoGraphicsListRegistry));
 
          YoFramePoint3D desiredPosition = new YoFramePoint3D(name + "desiredPosition", ReferenceFrame.getWorldFrame(), registry);
          desiredPositions.set(robotSextant, desiredPosition);
