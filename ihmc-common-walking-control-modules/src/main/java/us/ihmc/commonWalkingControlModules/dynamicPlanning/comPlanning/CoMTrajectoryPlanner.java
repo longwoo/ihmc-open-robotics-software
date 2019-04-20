@@ -2,7 +2,6 @@ package us.ihmc.commonWalkingControlModules.dynamicPlanning.comPlanning;
 
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
-import us.ihmc.commons.MathTools;
 import us.ihmc.commons.lists.RecyclingArrayList;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
@@ -415,7 +414,7 @@ public class CoMTrajectoryPlanner implements CoMTrajectoryPlannerInterface
     */
    private void resetMatrices()
    {
-      int size = indexHandler.getTotalSize();
+      int size = indexHandler.getTotalNumberOfCoefficients();
       int numberOfVRPWaypoints = indexHandler.getNumberOfVRPWaypoints();
 
       coefficientMultipliers.reshape(size, size);
