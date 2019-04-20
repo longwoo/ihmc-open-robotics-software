@@ -3,7 +3,6 @@ package us.ihmc.commonWalkingControlModules.dynamicPlanning.comPlanning;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
-import us.ihmc.robotics.linearAlgebra.MatrixTools;
 import us.ihmc.robotics.linearAlgebra.commonOps.NativeCommonOps;
 import us.ihmc.yoVariables.providers.DoubleProvider;
 
@@ -62,7 +61,7 @@ public class CoMTrajectoryQPInputCalculator
    {
       int size = indexHandler.getNumberOfVRPWaypoints();
 
-      tempJ.reshape(indexHandler.getTotalSize(), size);
+      tempJ.reshape(indexHandler.getTotalNumberOfCoefficients(), size);
       tempJ.zero();
 
       CommonOps.multAdd(vrpBoundsJacobian, bezierMapMultiplier, tempJ);
@@ -94,7 +93,7 @@ public class CoMTrajectoryQPInputCalculator
       jacobianToPack.reshape(1, size);
       jacobianToPack.zero();
 
-      tempJ.reshape(1, indexHandler.getTotalSize());
+      tempJ.reshape(1, indexHandler.getTotalNumberOfCoefficients());
       tempJ.zero();
 
       // TODO the tempJ is super sparse, so this could be a lot faster
@@ -108,7 +107,7 @@ public class CoMTrajectoryQPInputCalculator
    {
       int size = indexHandler.getNumberOfVRPWaypoints();
 
-      tempJ.reshape(1, indexHandler.getTotalSize());
+      tempJ.reshape(1, indexHandler.getTotalNumberOfCoefficients());
       tempJ.zero();
 
       // TODO the tempJ is super sparse, so this could be a lot faster
@@ -129,7 +128,7 @@ public class CoMTrajectoryQPInputCalculator
       jacobianToPack.reshape(1, size);
       jacobianToPack.zero();
 
-      tempJ.reshape(1, indexHandler.getTotalSize());
+      tempJ.reshape(1, indexHandler.getTotalNumberOfCoefficients());
       tempJ.zero();
 
       // TODO the tempJ is super sparse, so this could be a lot faster

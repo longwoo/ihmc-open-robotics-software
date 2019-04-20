@@ -66,7 +66,7 @@ public class CoMTrajectoryOptimizationPlanner implements CoMTrajectoryPlannerInt
    private final DenseMatrix64F yConstants = new DenseMatrix64F(0, 1);
    private final DenseMatrix64F zConstants = new DenseMatrix64F(0, 1);
 
-   private final DenseMatrix64F vrpWaypointJacobian = new DenseMatrix64F(0, 1);
+   private final DenseMatrix64F netVrpWaypointSelectionMatrix = new DenseMatrix64F(0, 1);
 
    private final DenseMatrix64F vrpXWaypoints = new DenseMatrix64F(0, 1);
    private final DenseMatrix64F vrpYWaypoints = new DenseMatrix64F(0, 1);
@@ -443,7 +443,7 @@ public class CoMTrajectoryOptimizationPlanner implements CoMTrajectoryPlannerInt
     */
    private void resetMatrices()
    {
-      int size = indexHandler.getTotalSize();
+      int size = indexHandler.getTotalNumberOfCoefficients();
       int numberOfVRPWaypoints = indexHandler.getNumberOfVRPWaypoints();
 
       coefficientConstraintMultipliers.reshape(size, size);
@@ -451,7 +451,7 @@ public class CoMTrajectoryOptimizationPlanner implements CoMTrajectoryPlannerInt
       xConstants.reshape(size, 1);
       yConstants.reshape(size, 1);
       zConstants.reshape(size, 1);
-      vrpWaypointJacobian.reshape(size, numberOfVRPWaypoints); // only position
+      netVrpWaypointSelectionMatrix.reshape(size, numberOfVRPWaypoints); // only position
       vrpXWaypoints.reshape(numberOfVRPWaypoints, 1);
       vrpYWaypoints.reshape(numberOfVRPWaypoints, 1);
       vrpZWaypoints.reshape(numberOfVRPWaypoints, 1);
@@ -468,7 +468,7 @@ public class CoMTrajectoryOptimizationPlanner implements CoMTrajectoryPlannerInt
       xConstants.zero();
       yConstants.zero();
       zConstants.zero();
-      vrpWaypointJacobian.zero();
+      netVrpWaypointSelectionMatrix.zero();
       vrpXWaypoints.zero();
       vrpYWaypoints.zero();
       vrpZWaypoints.zero();
@@ -536,7 +536,7 @@ public class CoMTrajectoryOptimizationPlanner implements CoMTrajectoryPlannerInt
    private void computeJacobianAndObjectivesToFindCoMCoefficients(List<? extends ContactStateProvider> contactSequence)
    {
       inputCalculator.computeBezierMapMultiplier(contactSequence);
-      inputCalculator.computeJacobianToCoMCoefficients(coefficientConstraintMultipliersInv, vrpWaypointJacobian, coefficientsJacobian);
+      inputCalculator.computeJacobianToCoMCoefficients(coefficientConstraintMultipliersInv, netVrpWaypointSelectionMatrix, coefficientsJacobian);
       inputCalculator.computeCoMCoefficientsObjective(coefficientConstraintMultipliersInv, xConstants, yConstants, zConstants, xCoefficientsObjective,
                                                       yCoefficientsObjective, zCoefficientsObjective);
    }
@@ -736,7 +736,8 @@ public class CoMTrajectoryOptimizationPlanner implements CoMTrajectoryPlannerInt
    private void constrainVRPPosition(int sequenceId, int vrpWaypointPositionIndex, double time, FramePoint3DReadOnly desiredVRPPosition)
    {
       CoMTrajectoryPlannerTools.addVRPPositionConstraint(sequenceId, numberOfConstraints, vrpWaypointPositionIndex, time, omega.getValue(), desiredVRPPosition,
-                                                         coefficientConstraintMultipliers, vrpXWaypoints, vrpYWaypoints, vrpZWaypoints, vrpWaypointJacobian);
+                                                         coefficientConstraintMultipliers, vrpXWaypoints, vrpYWaypoints, vrpZWaypoints,
+                                                         netVrpWaypointSelectionMatrix);
       numberOfConstraints++;
    }
 
@@ -757,7 +758,8 @@ public class CoMTrajectoryOptimizationPlanner implements CoMTrajectoryPlannerInt
    private void constrainVRPVelocity(int sequenceId, int vrpWaypointVelocityIndex, double time, FrameVector3DReadOnly desiredVRPVelocity)
    {
       CoMTrajectoryPlannerTools.addVRPVelocityConstraint(sequenceId, numberOfConstraints, vrpWaypointVelocityIndex, omega.getValue(), time, desiredVRPVelocity,
-                                                         coefficientConstraintMultipliers, vrpXWaypoints, vrpYWaypoints, vrpZWaypoints, vrpWaypointJacobian);
+                                                         coefficientConstraintMultipliers, vrpXWaypoints, vrpYWaypoints, vrpZWaypoints,
+                                                         netVrpWaypointSelectionMatrix);
       numberOfConstraints++;
    }
 
