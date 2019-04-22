@@ -1,8 +1,10 @@
 package us.ihmc.footstepPlanning.graphSearch.graph.visualization;
 
+import controller_msgs.msg.dds.FootstepNodeDataListMessage;
 import controller_msgs.msg.dds.FootstepPlannerCellMessage;
 import controller_msgs.msg.dds.FootstepPlannerOccupancyMapMessage;
 import us.ihmc.communication.controllerAPI.StatusMessageOutputManager;
+import us.ihmc.footstepPlanning.graphSearch.footstepSnapping.FootstepNodeSnapperReadOnly;
 import us.ihmc.footstepPlanning.graphSearch.graph.FootstepNode;
 import us.ihmc.footstepPlanning.graphSearch.listeners.BipedalFootstepPlannerListener;
 import us.ihmc.idl.IDLSequence.Object;
@@ -18,6 +20,7 @@ public class MultiStagePlannerListener implements BipedalFootstepPlannerListener
 
    private final AtomicInteger planId = new AtomicInteger();
    private final FootstepPlannerOccupancyMapMessage occupancyMapMessage = new FootstepPlannerOccupancyMapMessage();
+   private final FootstepNodeDataListMessage intermediatePlanMessage = new FootstepNodeDataListMessage();
    private long lastBroadcastTime = -1;
 
    private final List<StagePlannerListener> listeners = new ArrayList<>();
@@ -41,7 +44,9 @@ public class MultiStagePlannerListener implements BipedalFootstepPlannerListener
    public void addNode(FootstepNode node, FootstepNode previousNode)
    {
       if(previousNode == null)
+      {
          lastBroadcastTime = System.currentTimeMillis();
+      }
    }
 
    @Override
@@ -66,6 +71,8 @@ public class MultiStagePlannerListener implements BipedalFootstepPlannerListener
          return;
 
       broadcastOccupancyMessage();
+      broadcastIntermediatePlanMessage();
+
       lastBroadcastTime = currentTime;
    }
 
@@ -73,6 +80,7 @@ public class MultiStagePlannerListener implements BipedalFootstepPlannerListener
    public void plannerFinished(List<FootstepNode> plan)
    {
       broadcastOccupancyMessage();
+      broadcastIntermediatePlanMessage();
    }
 
    private void broadcastOccupancyMessage()
@@ -81,12 +89,26 @@ public class MultiStagePlannerListener implements BipedalFootstepPlannerListener
       occupiedCells.clear();
 
       for (StagePlannerListener listener : listeners)
+      {
          listener.packOccupancyMapMessage(occupancyMapMessage);
+         listener.packFootstepNodeListMessage(intermediatePlanMessage);
+      }
 
       if (!occupancyMapMessage.getOccupiedCells().isEmpty())
       {
          occupancyMapMessage.setSequenceId(planId.get());
          statusMessageOutputManager.reportStatusMessage(occupancyMapMessage);
       }
+
+      if (!intermediatePlanMessage.getNodeData().isEmpty())
+      {
+         intermediatePlanMessage.setSequenceId(planId.get());
+         statusMessageOutputManager.reportStatusMessage(intermediatePlanMessage);
+      }
+   }
+
+   private void broadcastIntermediatePlanMessage()
+   {
+
    }
 }
