@@ -9,8 +9,8 @@ import java.util.List;
  */
 public class CoMTrajectoryPlannerIndexHandler
 {
-   private static final int polynomialCoefficientsPerSegment = 6;
-   private static final int vrpConstraintsPerSegment = 4;
+   protected static final int polynomialCoefficientsPerSegment = 6;
+   protected static final int vrpConstraintsPerSegment = 4;
 
    private int totalNumberOfCoefficients;
    private int numberOfVRPWaypoints;

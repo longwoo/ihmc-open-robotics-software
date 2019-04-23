@@ -66,7 +66,7 @@ public class EndEffectorCoMTrajectoryOptimizationPlanner implements CoMTrajector
    private final DenseMatrix64F yConstants = new DenseMatrix64F(0, 1);
    private final DenseMatrix64F zConstants = new DenseMatrix64F(0, 1);
 
-   private final DenseMatrix64F vrpWaypointJacobian = new DenseMatrix64F(0, 1);
+   private final DenseMatrix64F netVrpWaypointSelectionMatrix = new DenseMatrix64F(0, 1);
 
    private final DenseMatrix64F vrpXWaypoints = new DenseMatrix64F(0, 1);
    private final DenseMatrix64F vrpYWaypoints = new DenseMatrix64F(0, 1);
@@ -99,7 +99,7 @@ public class EndEffectorCoMTrajectoryOptimizationPlanner implements CoMTrajector
    private final double gravityZ;
    private double nominalCoMHeight;
 
-   private final CoMTrajectoryPlannerIndexHandler indexHandler;
+   private final EndEffectorCoMTrajectoryPlannerIndexHandler indexHandler = new EndEffectorCoMTrajectoryPlannerIndexHandler();
    private final CoMTrajectoryQPInputCalculator inputCalculator;
 
    private final FixedFramePoint3DBasics desiredCoMPosition = new FramePoint3D(worldFrame);
@@ -141,7 +141,6 @@ public class EndEffectorCoMTrajectoryOptimizationPlanner implements CoMTrajector
       this.nominalCoMHeight = nominalCoMHeight;
       this.gravityZ = Math.abs(gravityZ);
 
-      indexHandler = new CoMTrajectoryPlannerIndexHandler();
       inputCalculator = new CoMTrajectoryQPInputCalculator(indexHandler, omega);
 
       xSolver = new CoMTrajectoryQPSolver("xCoM", indexHandler, omega, registry);
@@ -443,7 +442,7 @@ public class EndEffectorCoMTrajectoryOptimizationPlanner implements CoMTrajector
     */
    private void resetMatrices()
    {
-      int size = indexHandler.getTotalSize();
+      int size = indexHandler.getTotalNumberOfCoefficients();
       int numberOfVRPWaypoints = indexHandler.getNumberOfVRPWaypoints();
 
       coefficientConstraintMultipliers.reshape(size, size);
@@ -451,7 +450,7 @@ public class EndEffectorCoMTrajectoryOptimizationPlanner implements CoMTrajector
       xConstants.reshape(size, 1);
       yConstants.reshape(size, 1);
       zConstants.reshape(size, 1);
-      vrpWaypointJacobian.reshape(size, numberOfVRPWaypoints); // only position
+      netVrpWaypointSelectionMatrix.reshape(size, numberOfVRPWaypoints); // only position
       vrpXWaypoints.reshape(numberOfVRPWaypoints, 1);
       vrpYWaypoints.reshape(numberOfVRPWaypoints, 1);
       vrpZWaypoints.reshape(numberOfVRPWaypoints, 1);
@@ -468,7 +467,7 @@ public class EndEffectorCoMTrajectoryOptimizationPlanner implements CoMTrajector
       xConstants.zero();
       yConstants.zero();
       zConstants.zero();
-      vrpWaypointJacobian.zero();
+      netVrpWaypointSelectionMatrix.zero();
       vrpXWaypoints.zero();
       vrpYWaypoints.zero();
       vrpZWaypoints.zero();
@@ -536,7 +535,7 @@ public class EndEffectorCoMTrajectoryOptimizationPlanner implements CoMTrajector
    private void computeJacobianAndObjectivesToFindCoMCoefficients(List<? extends ContactStateProvider> contactSequence)
    {
       inputCalculator.computeBezierMapMultiplier(contactSequence);
-      inputCalculator.computeJacobianToCoMCoefficients(coefficientConstraintMultipliersInv, vrpWaypointJacobian, coefficientsJacobian);
+      inputCalculator.computeJacobianToCoMCoefficients(coefficientConstraintMultipliersInv, netVrpWaypointSelectionMatrix, coefficientsJacobian);
       inputCalculator.computeCoMCoefficientsObjective(coefficientConstraintMultipliersInv, xConstants, yConstants, zConstants, xCoefficientsObjective,
                                                       yCoefficientsObjective, zCoefficientsObjective);
    }
@@ -736,7 +735,8 @@ public class EndEffectorCoMTrajectoryOptimizationPlanner implements CoMTrajector
    private void constrainVRPPosition(int sequenceId, int vrpWaypointPositionIndex, double time, FramePoint3DReadOnly desiredVRPPosition)
    {
       CoMTrajectoryPlannerTools.addVRPPositionConstraint(sequenceId, numberOfConstraints, vrpWaypointPositionIndex, time, omega.getValue(), desiredVRPPosition,
-                                                         coefficientConstraintMultipliers, vrpXWaypoints, vrpYWaypoints, vrpZWaypoints, vrpWaypointJacobian);
+                                                         coefficientConstraintMultipliers, vrpXWaypoints, vrpYWaypoints, vrpZWaypoints,
+                                                         netVrpWaypointSelectionMatrix);
       numberOfConstraints++;
    }
 
@@ -757,7 +757,8 @@ public class EndEffectorCoMTrajectoryOptimizationPlanner implements CoMTrajector
    private void constrainVRPVelocity(int sequenceId, int vrpWaypointVelocityIndex, double time, FrameVector3DReadOnly desiredVRPVelocity)
    {
       CoMTrajectoryPlannerTools.addVRPVelocityConstraint(sequenceId, numberOfConstraints, vrpWaypointVelocityIndex, omega.getValue(), time, desiredVRPVelocity,
-                                                         coefficientConstraintMultipliers, vrpXWaypoints, vrpYWaypoints, vrpZWaypoints, vrpWaypointJacobian);
+                                                         coefficientConstraintMultipliers, vrpXWaypoints, vrpYWaypoints, vrpZWaypoints,
+                                                         netVrpWaypointSelectionMatrix);
       numberOfConstraints++;
    }
 
