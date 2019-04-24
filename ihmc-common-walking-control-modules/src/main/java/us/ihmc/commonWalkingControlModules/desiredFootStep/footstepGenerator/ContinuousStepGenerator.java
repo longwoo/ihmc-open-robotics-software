@@ -137,6 +137,7 @@ public class ContinuousStepGenerator implements Updatable
    private DesiredTurningVelocityProvider desiredTurningVelocityProvider = () -> 0.0;
    private FootstepMessenger footstepMessenger;
    private FootstepAdjustment footstepAdjustment;
+   private FootstepValidityChecker footstepValidityChecker;
 
    private final FootstepDataListMessage footstepDataListMessage = new FootstepDataListMessage();
    private final RecyclingArrayList<FootstepDataMessage> footsteps = footstepDataListMessage.getFootstepDataList();
@@ -280,7 +281,13 @@ public class ContinuousStepGenerator implements Updatable
          nextFootstepPose2D.appendTranslation(xDisplacement, yDisplacement);
 
          nextFootstepPose3D.set(footstepAdjustment.adjustFootstep(nextFootstepPose2D, swingSide));
-
+         if (footstepValidityChecker != null && !footstepValidityChecker.checkFootstep(nextFootstepPose3D))
+         {
+            nextFootstepPose2D.set(footstepPose2D);
+            nextFootstepPose2D.appendTranslation(0.0, swingSide.negateIfRightSide(inPlaceWidth.getValue()));
+            nextFootstepPose3D.set(footstepAdjustment.adjustFootstep(nextFootstepPose2D, swingSide));
+         }
+         
          int vizualizerIndex = i / 2;
          List<FootstepVisualizer> footstepVisualizers = footstepSideDependentVisualizers.get(swingSide);
 
@@ -548,6 +555,17 @@ public class ContinuousStepGenerator implements Updatable
    public void setFootstepAdjustment(FootstepAdjustment footstepAdjustment)
    {
       this.footstepAdjustment = footstepAdjustment;
+   }
+
+   /**
+    * Sets a checker to indicate step validity. If a step is not valid, the step generator
+    * replaces it with a square-up step
+    *
+    * @param footstepValidityChecker method for checking step validity
+    */
+   public void setFootstepValidityChecker(FootstepValidityChecker footstepValidityChecker)
+   {
+      this.footstepValidityChecker = footstepValidityChecker;
    }
 
    /**
