@@ -149,7 +149,7 @@ public class FootstepPlanningStage implements FootstepPlanner
       BodyCollisionNodeChecker bodyCollisionNodeChecker = new BodyCollisionNodeChecker(collisionDetector, footstepPlanningParameters, snapper);
       PlanarRegionBaseOfCliffAvoider cliffAvoider = new PlanarRegionBaseOfCliffAvoider(footstepPlanningParameters, snapper, footPolygons);
 
-      DistanceAndYawBasedHeuristics heuristics = new DistanceAndYawBasedHeuristics(footstepPlanningParameters.getCostParameters().getAStarHeuristicsWeight(),
+      DistanceAndYawBasedHeuristics heuristics = new DistanceAndYawBasedHeuristics(snapper, footstepPlanningParameters.getCostParameters().getAStarHeuristicsWeight(),
                                                                                    footstepPlanningParameters);
 
       StagePlannerListener plannerListener = new StagePlannerListener(snapper, multiStageListener.getBroadcastDt());
