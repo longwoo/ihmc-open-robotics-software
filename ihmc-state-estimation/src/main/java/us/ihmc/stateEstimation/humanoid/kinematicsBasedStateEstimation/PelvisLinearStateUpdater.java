@@ -10,6 +10,7 @@ import us.ihmc.euclid.referenceFrame.FramePoint3D;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.interfaces.FixedFrameVector3DBasics;
+import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple3D.interfaces.Tuple3DReadOnly;
 import us.ihmc.graphicsDescription.appearance.YoAppearance;
@@ -100,6 +101,8 @@ public class PelvisLinearStateUpdater
    private final IntegerProvider optimalNumberOfTrustedFeet;
    private final DoubleProvider forceZInPercentThresholdToTrustFoot;
    private final DoubleProvider forceZInPercentThresholdToNotTrustFoot;
+   private final DoubleProvider footVelocityDifferenceRatioToFilterFoot;
+   private final DoubleProvider minFootVelocityToFilterFoot;
 
    private final Map<RigidBodyBasics, FootSwitchInterface> footSwitches;
    private final Map<RigidBodyBasics, FixedFrameVector3DBasics> footForces = new LinkedHashMap<>();
@@ -123,7 +126,7 @@ public class PelvisLinearStateUpdater
 
    private enum SlippageCompensatorMode
    {
-      LOAD_THRESHOLD, MIN_PELVIS_ACCEL
+      LOAD_THRESHOLD, MIN_PELVIS_ACCEL, LOAD_THRESHOLD_AND_PELVIS_ACCEL
    };
 
    private final YoEnum<SlippageCompensatorMode> slippageCompensatorMode = new YoEnum<SlippageCompensatorMode>("slippageCompensatorMode",
@@ -205,6 +208,8 @@ public class PelvisLinearStateUpdater
       optimalNumberOfTrustedFeet = new IntegerParameter("optimalNumberOfTrustedFeet", registry, 2);
       forceZInPercentThresholdToTrustFoot = new DoubleParameter("forceZInPercentThresholdToTrustFoot", registry, stateEstimatorParameters.getForceInPercentOfWeightThresholdToTrustFoot());
       forceZInPercentThresholdToNotTrustFoot = new DoubleParameter("forceZInPercentThresholdToNotTrustFoot", registry, stateEstimatorParameters.getForceInPercentOfWeightThresholdToNotTrustFoot());
+      footVelocityDifferenceRatioToFilterFoot = new DoubleParameter("footVelocityDifferenceRatioToFilterFoot", registry, Double.POSITIVE_INFINITY);
+      minFootVelocityToFilterFoot = new DoubleParameter("minFootVelocityToFilterFoot", registry, 0.1);
       trustImuWhenNoFeetAreInContact = new BooleanParameter("trustImuWhenNoFeetAreInContact", registry, stateEstimatorParameters.getPelvisLinearStateUpdaterTrustImuWhenNoFeetAreInContact());
       useGroundReactionForcesToComputeCenterOfMassVelocity = new BooleanParameter("useGRFToComputeCoMVelocity", registry, stateEstimatorParameters.useGroundReactionForcesToComputeCenterOfMassVelocity());
 
@@ -333,7 +338,13 @@ public class PelvisLinearStateUpdater
             numberOfEndEffectorsTrusted.set(filteredNumberOfEndEffectorsTrusted);
             break;
          case MIN_PELVIS_ACCEL:
-            throw new RuntimeException("Implement me if possible!");
+            filteredNumberOfEndEffectorsTrusted = filterTrustedFeetBasedOnResultingPelvisAcceleration(numberOfEndEffectorsTrusted.getIntegerValue());
+            numberOfEndEffectorsTrusted.set(filteredNumberOfEndEffectorsTrusted);
+         case LOAD_THRESHOLD_AND_PELVIS_ACCEL:
+            filteredNumberOfEndEffectorsTrusted = filterTrustedFeetBasedOnContactForces(numberOfEndEffectorsTrusted.getIntegerValue());
+            filteredNumberOfEndEffectorsTrusted = filterTrustedFeetBasedOnResultingPelvisAcceleration(filteredNumberOfEndEffectorsTrusted);
+            numberOfEndEffectorsTrusted.set(filteredNumberOfEndEffectorsTrusted);
+            break;
          default:
             throw new RuntimeException("Should not get there");
          }
@@ -589,6 +600,48 @@ public class PelvisLinearStateUpdater
 
       return filteredNumberOfEndEffectorsTrusted;
    }
+
+   private final FrameVector3D tmpPelvisVelocityInWorld = new FrameVector3D();
+   private final FrameVector3D averageFootVelocity = new FrameVector3D();
+
+
+   private int filterTrustedFeetBasedOnResultingPelvisAcceleration(int numberOfEndEffectorsTrusted)
+   {
+      kinematicsBasedLinearStateCalculator.getPelvisVelocity(tmpPelvisVelocityInWorld);
+
+      averageFootVelocity.setToZero();
+      for (int i = 0; i < feet.size(); i++)
+      {
+         RigidBodyBasics foot = feet.get(i);
+         // don't add it if it isn't already trusted
+         if (!areFeetTrusted.get(foot).getBooleanValue())
+            continue;
+
+         // any foot velocity is bad, as it should all be zero, unless it is slipping
+         FrameVector3DReadOnly footVelocity = kinematicsBasedLinearStateCalculator.getFootVelocityInWorld(foot);
+         averageFootVelocity.scaleAdd(1.0 / numberOfEndEffectorsTrusted, footVelocity, averageFootVelocity);
+      }
+
+      double totalAverageVelocity = averageFootVelocity.length();
+
+      for (int i = 0; i < feet.size(); i++)
+      {
+         RigidBodyBasics foot = feet.get(i);
+         // don't bother if it isn't already trusted
+         if (!areFeetTrusted.get(foot).getBooleanValue())
+            continue;
+
+         double velocity = kinematicsBasedLinearStateCalculator.getFootVelocityInWorld(foot).length();
+         if (velocity < totalAverageVelocity * footVelocityDifferenceRatioToFilterFoot.getValue())
+            areFeetTrusted.get(foot).set(true);
+         else if (velocity > minFootVelocityToFilterFoot.getValue())
+            areFeetTrusted.get(foot).set(false);
+      }
+
+
+      return numberOfEndEffectorsTrusted;
+   }
+
 
    private final FrameVector3D pelvisVelocityIMUPart = new FrameVector3D();
    private final FramePoint3D pelvisPositionIMUPart = new FramePoint3D();
