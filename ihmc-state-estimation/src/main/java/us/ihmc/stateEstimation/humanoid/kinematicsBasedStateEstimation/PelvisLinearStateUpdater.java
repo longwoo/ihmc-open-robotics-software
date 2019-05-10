@@ -1,9 +1,6 @@
 package us.ihmc.stateEstimation.humanoid.kinematicsBasedStateEstimation;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import us.ihmc.commons.MathTools;
 import us.ihmc.euclid.referenceFrame.FramePoint3D;
@@ -619,10 +616,14 @@ public class PelvisLinearStateUpdater
 
          // any foot velocity is bad, as it should all be zero, unless it is slipping
          FrameVector3DReadOnly footVelocity = kinematicsBasedLinearStateCalculator.getFootVelocityInWorld(foot);
-         averageFootVelocity.scaleAdd(1.0 / numberOfEndEffectorsTrusted, footVelocity, averageFootVelocity);
+         averageFootVelocity.add(footVelocity);
       }
 
+      averageFootVelocity.scale(1.0 / numberOfEndEffectorsTrusted);
+
       double totalAverageVelocity = averageFootVelocity.length();
+
+      numberOfEndEffectorsTrusted = 0;
 
       for (int i = 0; i < feet.size(); i++)
       {
@@ -632,10 +633,10 @@ public class PelvisLinearStateUpdater
             continue;
 
          double velocity = kinematicsBasedLinearStateCalculator.getFootVelocityInWorld(foot).length();
-         if (velocity < totalAverageVelocity * footVelocityDifferenceRatioToFilterFoot.getValue())
-            areFeetTrusted.get(foot).set(true);
-         else if (velocity > minFootVelocityToFilterFoot.getValue())
+         if (velocity > Math.max(minFootVelocityToFilterFoot.getValue(), totalAverageVelocity * footVelocityDifferenceRatioToFilterFoot.getValue()))
             areFeetTrusted.get(foot).set(false);
+         else
+            numberOfEndEffectorsTrusted++;
       }
 
 
