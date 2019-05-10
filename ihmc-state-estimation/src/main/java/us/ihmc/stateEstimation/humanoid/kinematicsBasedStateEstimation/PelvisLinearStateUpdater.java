@@ -93,6 +93,7 @@ public class PelvisLinearStateUpdater
    private final BooleanProvider useGroundReactionForcesToComputeCenterOfMassVelocity;
    private final YoInteger numberOfEndEffectorsTrusted = new YoInteger("numberOfEndEffectorsTrusted", registry);
    private final YoInteger numberOfEndEffectorsFilteredByLoad = new YoInteger("numberOfEndEffectorsFilteredByLoad", registry);
+   private final YoInteger numberOfEndEffectorsFilteredByVelocity = new YoInteger("numberOfEndEffectorsFilteredByVelocity", registry);
 
    private final Map<RigidBodyBasics, YoDouble> footForcesZInPercentOfTotalForce = new LinkedHashMap<>();
    private final IntegerProvider optimalNumberOfTrustedFeet;
@@ -206,11 +207,11 @@ public class PelvisLinearStateUpdater
       forceZInPercentThresholdToTrustFoot = new DoubleParameter("forceZInPercentThresholdToTrustFoot", registry, stateEstimatorParameters.getForceInPercentOfWeightThresholdToTrustFoot());
       forceZInPercentThresholdToNotTrustFoot = new DoubleParameter("forceZInPercentThresholdToNotTrustFoot", registry, stateEstimatorParameters.getForceInPercentOfWeightThresholdToNotTrustFoot());
       footVelocityDifferenceRatioToFilterFoot = new DoubleParameter("footVelocityDifferenceRatioToFilterFoot", registry, Double.POSITIVE_INFINITY);
-      minFootVelocityToFilterFoot = new DoubleParameter("minFootVelocityToFilterFoot", registry, 0.1);
+      minFootVelocityToFilterFoot = new DoubleParameter("minFootVelocityToFilterFoot", registry, 0.025);
       trustImuWhenNoFeetAreInContact = new BooleanParameter("trustImuWhenNoFeetAreInContact", registry, stateEstimatorParameters.getPelvisLinearStateUpdaterTrustImuWhenNoFeetAreInContact());
       useGroundReactionForcesToComputeCenterOfMassVelocity = new BooleanParameter("useGRFToComputeCoMVelocity", registry, stateEstimatorParameters.useGroundReactionForcesToComputeCenterOfMassVelocity());
 
-      slippageCompensatorMode.set(SlippageCompensatorMode.LOAD_THRESHOLD);
+      slippageCompensatorMode.set(SlippageCompensatorMode.LOAD_THRESHOLD_AND_PELVIS_ACCEL);
 
       //      requestStopEstimationOfPelvisLinearState.set(true);
 
@@ -325,6 +326,7 @@ public class PelvisLinearStateUpdater
 
       numberOfEndEffectorsTrusted.set(setTrustedFeetUsingFootSwitches());
       numberOfEndEffectorsFilteredByLoad.set(0);
+      numberOfEndEffectorsFilteredByVelocity.set(0);
 
       if (numberOfEndEffectorsTrusted.getIntegerValue() >= optimalNumberOfTrustedFeet.getValue())
       {
@@ -623,7 +625,7 @@ public class PelvisLinearStateUpdater
 
       double totalAverageVelocity = averageFootVelocity.length();
 
-      numberOfEndEffectorsTrusted = 0;
+      int filteredNumberOfEndEffectorsTrusted = 0;
 
       for (int i = 0; i < feet.size(); i++)
       {
@@ -636,11 +638,12 @@ public class PelvisLinearStateUpdater
          if (velocity > Math.max(minFootVelocityToFilterFoot.getValue(), totalAverageVelocity * footVelocityDifferenceRatioToFilterFoot.getValue()))
             areFeetTrusted.get(foot).set(false);
          else
-            numberOfEndEffectorsTrusted++;
+            filteredNumberOfEndEffectorsTrusted++;
       }
 
 
-      return numberOfEndEffectorsTrusted;
+      numberOfEndEffectorsFilteredByVelocity.set(numberOfEndEffectorsTrusted - filteredNumberOfEndEffectorsTrusted);
+      return filteredNumberOfEndEffectorsTrusted;
    }
 
 
