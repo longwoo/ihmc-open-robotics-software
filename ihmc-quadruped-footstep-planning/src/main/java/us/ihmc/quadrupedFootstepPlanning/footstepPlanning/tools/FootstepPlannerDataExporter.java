@@ -6,18 +6,16 @@ import us.ihmc.euclid.tuple3D.interfaces.Point3DReadOnly;
 import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.euclid.tuple4D.interfaces.QuaternionReadOnly;
 import us.ihmc.messager.Messager;
+import us.ihmc.messager.MessagerAPIFactory.Topic;
 import us.ihmc.pathPlanning.DataSet;
 import us.ihmc.pathPlanning.DataSetIOTools;
 import us.ihmc.pathPlanning.PlannerInput;
 import us.ihmc.quadrupedFootstepPlanning.footstepPlanning.FootstepPlannerType;
-import us.ihmc.quadrupedFootstepPlanning.footstepPlanning.communication.FootstepPlannerMessagerAPI;
 import us.ihmc.robotEnvironmentAwareness.tools.ExecutorServiceTools;
 import us.ihmc.robotEnvironmentAwareness.tools.ExecutorServiceTools.ExceptionHandling;
 import us.ihmc.robotics.PlanarRegionFileTools;
 import us.ihmc.robotics.geometry.PlanarRegionsList;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -35,17 +33,20 @@ public class FootstepPlannerDataExporter
    private final AtomicReference<Double> timeout;
    private final AtomicReference<FootstepPlannerType> plannerType;
 
-   public FootstepPlannerDataExporter(Messager messager)
+   public FootstepPlannerDataExporter(Messager messager, Topic<PlanarRegionsList> planarRegionDataTopic, Topic<Point3D> startPositionTopic,
+                                      Topic<Quaternion> startOrientationTopic, Topic<Point3D> goalPositionTopic, Topic<Quaternion> goalOrientationTopic,
+                                      Topic<Double> plannerTimeoutTopic, Topic<FootstepPlannerType> plannerTypeTopic, Topic<String> exportUnitTestPath,
+                                      Topic<Boolean> exportUnitTestDataFile)
    {
-      planarRegionsState = messager.createInput(FootstepPlannerMessagerAPI.PlanarRegionDataTopic);
-      startPosition = messager.createInput(FootstepPlannerMessagerAPI.StartPositionTopic);
-      startOrientation = messager.createInput(FootstepPlannerMessagerAPI.StartOrientationTopic);
-      goalPosition = messager.createInput(FootstepPlannerMessagerAPI.GoalPositionTopic);
-      goalOrientation = messager.createInput(FootstepPlannerMessagerAPI.GoalOrientationTopic);
-      timeout = messager.createInput(FootstepPlannerMessagerAPI.PlannerTimeoutTopic);
-      plannerType = messager.createInput(FootstepPlannerMessagerAPI.PlannerTypeTopic);
-      dataDirectoryPath = messager.createInput(FootstepPlannerMessagerAPI.exportUnitTestPath, null);
-      messager.registerTopicListener(FootstepPlannerMessagerAPI.exportUnitTestDataFile, this::exportFootstepPlannerData);
+      planarRegionsState = messager.createInput(planarRegionDataTopic);
+      startPosition = messager.createInput(startPositionTopic);
+      startOrientation = messager.createInput(startOrientationTopic);
+      goalPosition = messager.createInput(goalPositionTopic);
+      goalOrientation = messager.createInput(goalOrientationTopic);
+      timeout = messager.createInput(plannerTimeoutTopic);
+      plannerType = messager.createInput(plannerTypeTopic);
+      dataDirectoryPath = messager.createInput(exportUnitTestPath, null);
+      messager.registerTopicListener(exportUnitTestDataFile, this::exportFootstepPlannerData);
    }
 
    private void exportFootstepPlannerData(boolean export)

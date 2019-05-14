@@ -48,6 +48,7 @@ public class QuadrupedUIMessagerAPI
    private static final CategoryTheme FlatGround = apiFactory.createCategoryTheme("FlatGround");
    private static final CategoryTheme Position = apiFactory.createCategoryTheme("Position");
    private static final CategoryTheme Orientation = apiFactory.createCategoryTheme("Orientation");
+   private static final CategoryTheme UnitTest = apiFactory.createCategoryTheme("UnitTest");
 
    private static final CategoryTheme Start = apiFactory.createCategoryTheme("Start");
    private static final CategoryTheme LowLevelGoal = apiFactory.createCategoryTheme("LowLevelGoal");
@@ -72,6 +73,7 @@ public class QuadrupedUIMessagerAPI
    private static final TypedTopicTheme<QuadrupedTimedStepListMessage> StepsListMessage = apiFactory.createTypedTopicTheme("StepsListMessage");
 
    private static final TypedTopicTheme<Boolean> Show = apiFactory.createTypedTopicTheme("Show");
+   private static final TypedTopicTheme<Boolean> Export = apiFactory.createTypedTopicTheme("Export");
    private static final TypedTopicTheme<Integer> Id = apiFactory.createTypedTopicTheme("Id");
    private static final TypedTopicTheme<PlanarRegion> PlanarRegion = apiFactory.createTypedTopicTheme("PlanarRegion");
    private static final TypedTopicTheme<PlanarRegionsList> PlanarRegionsList = apiFactory.createTypedTopicTheme("PlanarRegionsList");
@@ -85,6 +87,8 @@ public class QuadrupedUIMessagerAPI
    private static final TypedTopicTheme<List<? extends Point3DReadOnly>> BodyPathPlan = apiFactory.createTypedTopicTheme("BodyPathPlan");
    private static final TypedTopicTheme<Double> Time = apiFactory.createTypedTopicTheme("Time");
    private static final TypedTopicTheme<Double> Length = apiFactory.createTypedTopicTheme("Length");
+
+   private static final TypedTopicTheme<String> Path = apiFactory.createTypedTopicTheme("Path");
 
    private static final Category Root = apiFactory.createRootCategory(apiFactory.createCategoryTheme("QuadrupedUI"));
 
@@ -127,6 +131,9 @@ public class QuadrupedUIMessagerAPI
    public static final Topic<Integer> ReceivedPlanIdTopic = Root.child(FootstepPlanning).child(Result).topic(Id);
    public static final Topic<Boolean> ShowFootstepPlanTopic = Root.child(FootstepPlanning).child(Result).topic(Show);
    public static final Topic<PlanarRegion> SelectedRegionTopic = Root.child(FootstepPlanning).child(Edit).topic(PlanarRegion);
+
+   public static final Topic<Boolean> ExportUnitTestDataFile = Root.child(FootstepPlanning).child(UnitTest).topic(Export);
+   public static final Topic<String> ExportUnitTestPath = Root.child(FootstepPlanning).child(UnitTest).topic(Path);
 
    public static final Topic<FootstepPlanningResult> PlanningResultTopic = Root.child(FootstepPlanning).child(Result).topic(PlanningResult);
    public static final Topic<FootstepPlannerStatus> PlannerStatusTopic = Root.child(FootstepPlanning).child(Status).topic(PlannerStatus);

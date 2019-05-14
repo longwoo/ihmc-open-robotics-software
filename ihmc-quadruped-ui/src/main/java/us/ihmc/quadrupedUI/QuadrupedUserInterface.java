@@ -1,5 +1,6 @@
 package us.ihmc.quadrupedUI;
 
+import com.jme3.scene.shape.Quad;
 import controller_msgs.msg.dds.RobotConfigurationData;
 import javafx.animation.AnimationTimer;
 import javafx.fxml.FXML;
@@ -19,6 +20,7 @@ import us.ihmc.pathPlanning.visibilityGraphs.interfaces.VisibilityGraphsParamete
 import us.ihmc.pathPlanning.visibilityGraphs.ui.StartGoalPositionEditor;
 import us.ihmc.pathPlanning.visibilityGraphs.ui.viewers.PlanarRegionViewer;
 import us.ihmc.quadrupedFootstepPlanning.footstepPlanning.graphSearch.parameters.FootstepPlannerParameters;
+import us.ihmc.quadrupedFootstepPlanning.footstepPlanning.tools.FootstepPlannerDataExporter;
 import us.ihmc.quadrupedFootstepPlanning.ui.components.StartGoalOrientationEditor;
 import us.ihmc.quadrupedFootstepPlanning.ui.controllers.FootstepPlannerMenuUIController;
 import us.ihmc.quadrupedFootstepPlanning.ui.controllers.FootstepPlannerParametersUIController;
@@ -30,15 +32,14 @@ import us.ihmc.quadrupedFootstepPlanning.ui.viewers.StartGoalOrientationViewer;
 import us.ihmc.quadrupedFootstepPlanning.ui.viewers.StartGoalPositionViewer;
 import us.ihmc.quadrupedPlanning.QuadrupedXGaitSettingsReadOnly;
 import us.ihmc.quadrupedRobotics.model.QuadrupedModelFactory;
-import us.ihmc.quadrupedUI.uiControllers.RobotControlTabController;
-import us.ihmc.quadrupedUI.uiControllers.ManualStepTabController;
-import us.ihmc.quadrupedUI.uiControllers.XGaitSettingsController;
+import us.ihmc.quadrupedUI.uiControllers.*;
 
 public class QuadrupedUserInterface
 {
    private final Stage primaryStage;
    private final BorderPane mainPane;
 
+   private final FootstepPlannerDataExporter dataExporter;
    private final PlanarRegionViewer planarRegionViewer;
    private final StartGoalPositionViewer startGoalPositionViewer;
    private final StartGoalOrientationViewer startGoalOrientationViewer;
@@ -51,8 +52,8 @@ public class QuadrupedUserInterface
    private final JavaFXQuadrupedVisualizer robotVisualizer;
    private final AnimationTimer cameraTracking;
 
-   @FXML
-   private FootstepPlannerMenuUIController footstepPlannerMenuUIController;
+//   @FXML
+//   private QuadrupedMenuUIController quadrupedMenuUIController;
    @FXML
    private MainTabController plannerTabController;
    @FXML
@@ -88,12 +89,16 @@ public class QuadrupedUserInterface
       footstepPlannerParametersUIController.attachMessager(messager);
       visibilityGraphsParametersUIController.attachMessager(messager);
       manualStepTabController.attachMessager(messager, xGaitSettings);
+//      quadrupedMenuUIController.attachMessager(messager);
+
+//      quadrupedMenuUIController.setMainWindow(primaryStage);
 
       manualStepTabController.setFullRobotModelFactory(modelFactory);
 
       setPlannerTabTopics();
       footstepPlannerParametersUIController.setPlannerParametersTopic(QuadrupedUIMessagerAPI.FootstepPlannerParametersTopic);
       visibilityGraphsParametersUIController.setVisibilityGraphsParametersTopic(QuadrupedUIMessagerAPI.VisibilityGraphsParametersTopic);
+//      quadrupedMenuUIController.setTopics(QuadrupedUIMessagerAPI.ExportUnitTestPath, QuadrupedUIMessagerAPI.ExportUnitTestDataFile);
 
       plannerTabController.bindControls();
       robotControlTabController.bindControls();
@@ -108,6 +113,12 @@ public class QuadrupedUserInterface
       view3dFactory.addCameraController(true);
       view3dFactory.addWorldCoordinateSystem(0.3);
       Pane subScene = view3dFactory.getSubSceneWrappedInsidePane();
+
+      this.dataExporter = new FootstepPlannerDataExporter(messager, QuadrupedUIMessagerAPI.PlanarRegionDataTopic, QuadrupedUIMessagerAPI.StartPositionTopic,
+                                                          QuadrupedUIMessagerAPI.StartOrientationTopic, QuadrupedUIMessagerAPI.GoalPositionTopic,
+                                                          QuadrupedUIMessagerAPI.GoalOrientationTopic, QuadrupedUIMessagerAPI.PlannerTimeoutTopic,
+                                                          QuadrupedUIMessagerAPI.PlannerTypeTopic, QuadrupedUIMessagerAPI.ExportUnitTestPath,
+                                                          QuadrupedUIMessagerAPI.ExportUnitTestDataFile);
 
       this.planarRegionViewer = new PlanarRegionViewer(messager, QuadrupedUIMessagerAPI.PlanarRegionDataTopic, QuadrupedUIMessagerAPI.ShowPlanarRegionsTopic);
       this.startGoalPositionViewer = new StartGoalPositionViewer(messager, QuadrupedUIMessagerAPI.StartPositionEditModeEnabledTopic,
@@ -215,6 +226,7 @@ public class QuadrupedUserInterface
       pawPathViewer.stop();
       bodyPathMeshViewer.stop();
       cameraTracking.stop();
+      dataExporter.stop();
 
       try
       {
