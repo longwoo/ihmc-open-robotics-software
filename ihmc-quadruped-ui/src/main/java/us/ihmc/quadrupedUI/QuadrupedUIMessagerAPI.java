@@ -60,6 +60,7 @@ public class QuadrupedUIMessagerAPI
    private static final TypedTopicTheme<Boolean> Enable = apiFactory.createTypedTopicTheme("Enable");
    private static final TypedTopicTheme<Boolean> Begin = apiFactory.createTypedTopicTheme("Start");
    private static final TypedTopicTheme<Boolean> Stop = apiFactory.createTypedTopicTheme("Stop");
+   private static final TypedTopicTheme<Boolean> Pause = apiFactory.createTypedTopicTheme("Pause");
    private static final TypedTopicTheme<Double> DesiredBodyHeight = apiFactory.createTypedTopicTheme("BodyHeight");
    private static final TypedTopicTheme<QuadrupedXGaitSettingsReadOnly> XGaitSettings = apiFactory.createTypedTopicTheme("XGaitSettings");
    private static final TypedTopicTheme<FootstepPlannerParameters> FootstepPlannerParameters = apiFactory.createTypedTopicTheme("FootstepPlannerParameters");
@@ -105,11 +106,11 @@ public class QuadrupedUIMessagerAPI
    public static final Topic<Boolean> AssumeFlatGroundTopic = Root.child(Environment).child(PlanarRegions).child(FlatGround).topic(Enable);
    public static final Topic<Boolean> ShowPlanarRegionsTopic = Root.child(Environment).child(PlanarRegions).topic(Show);
 
-
    /* Status */
    public static final Topic<QuadrupedFootstepStatusMessage> FootstepStatusMessageTopic = Root.child(Controller).child(Status).topic(FootstepStatusMessage);
    public static final Topic<HighLevelControllerName> CurrentControllerNameTopic = Root.child(Controller).child(Status).topic(ControllerState);
    public static final Topic<HighLevelControllerName> DesiredControllerNameTopic = Root.child(Controller).child(Command).topic(ControllerState);
+   public static final Topic<QuadrupedSteppingStateEnum> CurrentSteppingStateNameTopic = Root.child(Controller).child(Status).topic(SteppingState);
    public static final Topic<QuadrupedSteppingStateEnum> DesiredSteppingStateNameTopic = Root.child(Controller).child(Command).topic(SteppingState);
 
    /* Teleop */
@@ -120,6 +121,7 @@ public class QuadrupedUIMessagerAPI
    public static final Topic<Boolean> EnableJoystickTopic = Root.child(Command).child(Joystick).topic(Enable);
    public static final Topic<QuadrupedTimedStepListMessage> ManualStepsListMessageTopic = Root.child(Command).child(StepTeleop).topic(StepsListMessage);
    public static final Topic<SoleTrajectoryMessage> SoleTrajectoryMessageTopic = Root.child(Command).child(StepTeleop).topic(SoleTrajectoryMessage);
+   public static final Topic<Boolean> PauseWalkingTopic = Root.child(Command).child(StepTeleop).topic(Pause);
 
    public static final Topic<QuadrupedTeleopDesiredVelocity> DesiredTeleopVelocity = Root.child(Command).child(StepTeleop).topic(DesiredTeleopVelocityMessage);
    public static final Topic<QuadrupedTeleopDesiredPose> DesiredTeleopBodyPoseTopic = Root.child(Command).child(BodyTeleop).topic(DesiredTeleopBodyPoseMessage);
