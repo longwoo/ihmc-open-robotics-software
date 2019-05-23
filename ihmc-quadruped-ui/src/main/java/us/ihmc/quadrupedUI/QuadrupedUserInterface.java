@@ -5,6 +5,8 @@ import javafx.animation.AnimationTimer;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.transform.Translate;
@@ -38,6 +40,7 @@ public class QuadrupedUserInterface
 {
    private final Stage primaryStage;
    private final BorderPane mainPane;
+   private final JavaFXMessager messager;
 
    private final PlanarRegionViewer planarRegionViewer;
    private final StartGoalPositionViewer startGoalPositionViewer;
@@ -75,6 +78,7 @@ public class QuadrupedUserInterface
          throws Exception
    {
       this.primaryStage = primaryStage;
+      this.messager = messager;
 
       FXMLLoader loader = new FXMLLoader();
       loader.setController(this);
@@ -149,6 +153,8 @@ public class QuadrupedUserInterface
 
       plannerTabController.setPreviewFootstepPositions(pawPathViewer.getPreviewFootstepPositions());
 
+      subScene.addEventHandler(KeyEvent.ANY, this::onKeyEvent);
+
       manualStepTabController.initScene(view3dFactory.getSubScene());
 
       robotVisualizer = new JavaFXQuadrupedVisualizer(messager, modelFactory, QuadrupedUIMessagerAPI.RobotModelTopic);
@@ -214,6 +220,16 @@ public class QuadrupedUserInterface
 
       primaryStage.setScene(mainScene);
       primaryStage.setOnCloseRequest(event -> stop());
+   }
+
+
+   private void onKeyEvent(KeyEvent keyEvent)
+   {
+      // pressed and released only use code field
+      if (keyEvent.getEventType() == KeyEvent.KEY_PRESSED && keyEvent.getCode() == KeyCode.ESCAPE)
+      {
+         messager.submitMessage(QuadrupedUIMessagerAPI.AbortWalkingTopic, true);
+      }
    }
 
    private void submitNewConfiguration(RobotConfigurationData configuration)
