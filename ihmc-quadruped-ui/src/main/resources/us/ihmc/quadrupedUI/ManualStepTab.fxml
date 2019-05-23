@@ -88,6 +88,11 @@
                            </BorderPane.margin></Spinner>
                      </center>
                   </BorderPane>
+                  <Button fx:id="requestLoadFoot" text="Load foot" GridPane.rowIndex="3">
+                      <GridPane.margin>
+                          <Insets top="5.0" />
+                      </GridPane.margin>
+                  </Button>
                </children>
                <columnConstraints>
                   <ColumnConstraints />
