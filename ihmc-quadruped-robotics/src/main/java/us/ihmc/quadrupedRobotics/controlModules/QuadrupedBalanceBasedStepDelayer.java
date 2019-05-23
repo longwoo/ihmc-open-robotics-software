@@ -57,7 +57,7 @@ public class QuadrupedBalanceBasedStepDelayer
 
    private final BooleanProvider allowDelayingSteps = new BooleanParameter("allowingDelayingSteps", registry, true);
    private final BooleanProvider delayAllSubsequentSteps = new BooleanParameter("delayAllSubsequentSteps", registry, true);
-   private final BooleanProvider requireTwoFeetInContact = new BooleanParameter("requireTwoFeetInContact", registry, true);
+   private final BooleanProvider requireTwoFeetInContact = new BooleanParameter("requireTwoFeetInContact", registry, false);
 
    private final DoubleProvider maximumDelayFraction = new DoubleParameter("maximumDelayFraction", registry, 0.2);
    private final DoubleProvider minimumTimeForStep = new DoubleParameter("minimumDurationForDelayedStep", registry, 0.4);
@@ -119,11 +119,6 @@ public class QuadrupedBalanceBasedStepDelayer
    {
       for (RobotQuadrant robotQuadrant : RobotQuadrant.values)
          delayedFootLocations.get(robotQuadrant).setToNaN();
-
-      if (!allowDelayingSteps.getValue())
-      {
-         return activeSteps;
-      }
 
       stepsStarting.clear();
       inactiveSteps.clear();
@@ -193,7 +188,7 @@ public class QuadrupedBalanceBasedStepDelayer
 
 
 
-      boolean forceDelay = (numberOfLeftSideFeetInContact + numberOfRightSideFeetInContact - stepsStarting.size() < 2) && requireTwoFeetInContact.getValue();
+      boolean forceDelayToPreventReallyBadContact = (numberOfLeftSideFeetInContact + numberOfRightSideFeetInContact - stepsStarting.size() < 2) && requireTwoFeetInContact.getValue();
 
       for (int i = 0; i < stepsStarting.size(); i++)
       {
@@ -210,7 +205,7 @@ public class QuadrupedBalanceBasedStepDelayer
             scaledNormalizedDCMEllipticalError *= thresholdScalerForNoFeetOnSide.getValue();
 
          timeScaledEllipticalError.get(quadrantStarting).set(scaledNormalizedDCMEllipticalError);
-         if (!forceDelay && scaledNormalizedDCMEllipticalError < timeScaledEllipticalErrorThreshold.getValue())
+         if (!forceDelayToPreventReallyBadContact && scaledNormalizedDCMEllipticalError < timeScaledEllipticalErrorThreshold.getValue())
          {
             updatedActiveSteps.add(stepStarting);
             continue;
@@ -219,10 +214,10 @@ public class QuadrupedBalanceBasedStepDelayer
          icpError.changeFrameAndProjectToXYPlane(worldFrame);
 
          YoDouble delayDuration = delayDurations.get(quadrantStarting);
-         boolean delayStep = isFootPushingAgainstError(quadrantStarting) || forceDelay;
+         boolean delayStep = isFootPushingAgainstError(quadrantStarting) || forceDelayToPreventReallyBadContact;
          delayStep &= delayDuration.getDoubleValue() + delayAmount < (maximumDelayFraction.getValue() * stepStarting.getTimeInterval().getDuration());
 
-         if (delayStep)
+         if ((delayStep && allowDelayingSteps.getValue()) ||  forceDelayToPreventReallyBadContact)
          {
             TimeIntervalBasics timeInterval = stepStarting.getTimeInterval();
             double currentStartTime = timeInterval.getStartTime();
